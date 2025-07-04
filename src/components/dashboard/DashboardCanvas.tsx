@@ -1,197 +1,198 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MetricsWidget } from "@/components/widgets/MetricsWidget";
-import { ChartWidget } from "@/components/widgets/ChartWidget";
-import { TableWidget } from "@/components/widgets/TableWidget";
-import { Plus, LayoutGrid, Filter, Download, Zap } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Users, 
+  TrendingUp, 
+  DollarSign, 
+  Target,
+  Plus,
+  BarChart3,
+  Clock,
+  UserCheck,
+  Globe,
+  Share2,
+  Star,
+  Building
+} from "lucide-react";
+import { HRDashboard } from "@/components/hr/HRDashboard";
+import { MarketingDashboard } from "@/components/marketing/MarketingDashboard";
 
 export const DashboardCanvas = () => {
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [activeSection, setActiveSection] = useState<'overview' | 'hr' | 'marketing'>('overview');
 
-  const handleDragStart = (e: React.DragEvent, widgetType: string) => {
-    setDraggedItem(widgetType);
-    e.dataTransfer.effectAllowed = 'move';
-  };
+  const quickStats = [
+    {
+      title: "Total Employees",
+      value: "0",
+      icon: Users,
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10"
+    },
+    {
+      title: "Active Campaigns",
+      value: "0",
+      icon: TrendingUp,
+      color: "text-green-400",
+      bgColor: "bg-green-500/10"
+    },
+    {
+      title: "Monthly Revenue",
+      value: "$0",
+      icon: DollarSign,
+      color: "text-yellow-400",
+      bgColor: "bg-yellow-500/10"
+    },
+    {
+      title: "Active Integrations",
+      value: "0",
+      icon: Target,
+      color: "text-purple-400",
+      bgColor: "bg-purple-500/10"
+    }
+  ];
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'hr':
+        return <HRDashboard />;
+      case 'marketing':
+        return <MarketingDashboard />;
+      default:
+        return (
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickStats.map((stat, index) => (
+                <Card key={index} className="bg-slate-800/50 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-slate-400">{stat.title}</p>
+                        <p className="text-2xl font-bold text-white">{stat.value}</p>
+                      </div>
+                      <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    console.log('Dropped widget:', draggedItem);
-    toast({
-      title: "Widget Added",
-      description: `${draggedItem} widget has been added to your dashboard`,
-    });
-    setDraggedItem(null);
-  };
+            {/* Quick Actions */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button 
+                    onClick={() => setActiveSection('hr')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-6 h-auto flex flex-col gap-2"
+                  >
+                    <Users className="h-8 w-8" />
+                    <span className="font-medium">Manage HR</span>
+                    <span className="text-sm opacity-80">Employee management, payroll & more</span>
+                  </Button>
+                  <Button 
+                    onClick={() => setActiveSection('marketing')}
+                    className="bg-green-600 hover:bg-green-700 text-white p-6 h-auto flex flex-col gap-2"
+                  >
+                    <TrendingUp className="h-8 w-8" />
+                    <span className="font-medium">Marketing Tools</span>
+                    <span className="text-sm opacity-80">Campaigns, analytics & social media</span>
+                  </Button>
+                  <Button 
+                    className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto flex flex-col gap-2"
+                  >
+                    <Plus className="h-8 w-8" />
+                    <span className="font-medium">Add Integration</span>
+                    <span className="text-sm opacity-80">Connect new tools & platforms</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-  const handleExport = () => {
-    toast({
-      title: "Export Started",
-      description: "Your dashboard data is being exported...",
-    });
-  };
-
-  const handleFilter = () => {
-    toast({
-      title: "Filters",
-      description: "Filter panel opened",
-    });
+            {/* Getting Started */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Getting Started</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">1</div>
+                    <div>
+                      <p className="text-white font-medium">Connect Your First Integration</p>
+                      <p className="text-slate-400 text-sm">Start by connecting your existing tools and platforms</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <div className="flex-shrink-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-medium">2</div>
+                    <div>
+                      <p className="text-white font-medium">Set Up Your Team</p>
+                      <p className="text-slate-400 text-sm">Add employees and configure HR management</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <div className="flex-shrink-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">3</div>
+                    <div>
+                      <p className="text-white font-medium">Launch Marketing Campaigns</p>
+                      <p className="text-slate-400 text-sm">Create and manage your marketing initiatives</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+    }
   };
 
   return (
-    <div className="p-6 min-h-screen">
-      {/* Dashboard Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Sales Overview Dashboard</h2>
-          <p className="text-slate-400">Real-time business insights and analytics</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
-            onClick={handleFilter}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
-            onClick={handleExport}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button 
-            size="sm" 
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
-          >
-            <LayoutGrid className="h-4 w-4 mr-2" />
-            Edit Layout
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* Section Navigation */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={activeSection === 'overview' ? 'default' : 'outline'}
+          onClick={() => setActiveSection('overview')}
+          className={activeSection === 'overview' ? 
+            'bg-blue-600 hover:bg-blue-700 text-white' : 
+            'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }
+        >
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Overview
+        </Button>
+        <Button
+          variant={activeSection === 'hr' ? 'default' : 'outline'}
+          onClick={() => setActiveSection('hr')}
+          className={activeSection === 'hr' ? 
+            'bg-blue-600 hover:bg-blue-700 text-white' : 
+            'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }
+        >
+          <Users className="h-4 w-4 mr-2" />
+          HR Management
+        </Button>
+        <Button
+          variant={activeSection === 'marketing' ? 'default' : 'outline'}
+          onClick={() => setActiveSection('marketing')}
+          className={activeSection === 'marketing' ? 
+            'bg-blue-600 hover:bg-blue-700 text-white' : 
+            'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
+          }
+        >
+          <TrendingUp className="h-4 w-4 mr-2" />
+          Marketing
+        </Button>
       </div>
 
-      {/* Widget Palette */}
-      <Card className="bg-slate-800/50 border-slate-700 mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Add Widgets & Integrations
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-            {[
-              { type: 'metrics', label: 'Metrics Card', icon: '📊' },
-              { type: 'chart', label: 'Chart', icon: '📈' },
-              { type: 'table', label: 'Data Table', icon: '📋' },
-              { type: 'kpi', label: 'KPI', icon: '🎯' },
-              { type: 'timeline', label: 'Timeline', icon: '⏱️' },
-              { type: 'calendar', label: 'Calendar', icon: '📅' },
-            ].map((widget) => (
-              <Button
-                key={widget.type}
-                variant="outline"
-                size="sm"
-                className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 flex flex-col h-16 p-2"
-                draggable
-                onDragStart={(e) => handleDragStart(e, widget.type)}
-              >
-                <span className="text-lg mb-1">{widget.icon}</span>
-                <span className="text-xs">{widget.label}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dashboard Grid */}
-      <div 
-        className="grid grid-cols-12 gap-6 min-h-96"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        {/* Metrics Row */}
-        <div className="col-span-12 md:col-span-3">
-          <MetricsWidget 
-            title="Total Revenue"
-            value="$124,592"
-            change="+12.5%"
-            trend="up"
-          />
-        </div>
-        <div className="col-span-12 md:col-span-3">
-          <MetricsWidget 
-            title="Active Users"
-            value="2,847"
-            change="+8.2%"
-            trend="up"
-          />
-        </div>
-        <div className="col-span-12 md:col-span-3">
-          <MetricsWidget 
-            title="Conversion Rate"
-            value="3.24%"
-            change="-2.1%"
-            trend="down"
-          />
-        </div>
-        <div className="col-span-12 md:col-span-3">
-          <MetricsWidget 
-            title="Customer Satisfaction"
-            value="4.8/5"
-            change="+0.3"
-            trend="up"
-          />
-        </div>
-
-        {/* Charts Row */}
-        <div className="col-span-12 lg:col-span-8">
-          <ChartWidget 
-            title="Revenue Trends"
-            subtitle="Monthly performance overview"
-          />
-        </div>
-        <div className="col-span-12 lg:col-span-4">
-          <ChartWidget 
-            title="Traffic Sources"
-            subtitle="Acquisition channels"
-            type="pie"
-          />
-        </div>
-
-        {/* Table Row */}
-        <div className="col-span-12">
-          <TableWidget 
-            title="Recent Orders"
-            subtitle="Latest customer transactions"
-          />
-        </div>
-      </div>
-
-      {/* Drop Zone Indicator */}
-      {draggedItem && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          <div className="absolute inset-6 border-2 border-dashed border-blue-500 bg-blue-500/10 rounded-lg flex items-center justify-center">
-            <div className="text-blue-400 text-lg font-medium">
-              Drop widget here to add to dashboard
-            </div>
-          </div>
-        </div>
-      )}
+      {renderActiveSection()}
     </div>
   );
 };
