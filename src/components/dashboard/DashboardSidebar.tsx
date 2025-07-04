@@ -31,11 +31,17 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
   const [expandedSections, setExpandedSections] = useState<string[]>(['dashboards']);
 
   const toggleSection = (section: string) => {
+    console.log('Toggling section:', section);
     setExpandedSections(prev => 
       prev.includes(section) 
         ? prev.filter(s => s !== section)
         : [...prev, section]
     );
+  };
+
+  const handleViewChange = (view: 'dashboard' | 'integrations' | 'knowledge') => {
+    console.log('Changing view to:', view);
+    onViewChange(view);
   };
 
   const dashboards = [
@@ -60,7 +66,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             variant="ghost" 
             size="icon" 
             className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'dashboard' ? 'bg-slate-700/50 text-white' : ''}`}
-            onClick={() => onViewChange('dashboard')}
+            onClick={() => handleViewChange('dashboard')}
           >
             <Grid2x2 className="h-5 w-5" />
           </Button>
@@ -68,7 +74,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             variant="ghost" 
             size="icon" 
             className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'integrations' ? 'bg-slate-700/50 text-white' : ''}`}
-            onClick={() => onViewChange('integrations')}
+            onClick={() => handleViewChange('integrations')}
           >
             <Database className="h-5 w-5" />
           </Button>
@@ -76,7 +82,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             variant="ghost" 
             size="icon" 
             className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'knowledge' ? 'bg-slate-700/50 text-white' : ''}`}
-            onClick={() => onViewChange('knowledge')}
+            onClick={() => handleViewChange('knowledge')}
           >
             <BookOpen className="h-5 w-5" />
           </Button>
@@ -98,8 +104,9 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
               variant="ghost"
               className={`w-full justify-between hover:text-white hover:bg-slate-700/50 mb-2 ${activeView === 'dashboard' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
               onClick={() => {
+                console.log('Dashboard section clicked');
                 toggleSection('dashboards');
-                onViewChange('dashboard');
+                handleViewChange('dashboard');
               }}
             >
               <div className="flex items-center gap-2">
@@ -119,6 +126,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
                     key={dashboard.name}
                     variant="ghost"
                     className="w-full justify-between text-slate-400 hover:text-white hover:bg-slate-700/50 text-sm"
+                    onClick={() => console.log('Dashboard item clicked:', dashboard.name)}
                   >
                     <div className="flex items-center gap-2">
                       <dashboard.icon className="h-3 w-3" />
@@ -130,6 +138,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-slate-500 hover:text-white hover:bg-slate-700/50 text-sm"
+                  onClick={() => console.log('Create Dashboard clicked')}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Create Dashboard
@@ -144,8 +153,9 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
               variant="ghost"
               className={`w-full justify-between hover:text-white hover:bg-slate-700/50 mb-2 ${activeView === 'integrations' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
               onClick={() => {
+                console.log('Integrations section clicked');
                 toggleSection('integrations');
-                onViewChange('integrations');
+                handleViewChange('integrations');
               }}
             >
               <div className="flex items-center gap-2">
@@ -171,6 +181,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-slate-500 hover:text-white hover:bg-slate-700/50 text-sm"
+                  onClick={() => console.log('Add Integration clicked')}
                 >
                   <Plus className="h-3 w-3 mr-2" />
                   Add Integration
@@ -184,7 +195,10 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             <Button
               variant="ghost"
               className={`w-full justify-start hover:text-white hover:bg-slate-700/50 ${activeView === 'knowledge' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
-              onClick={() => onViewChange('knowledge')}
+              onClick={() => {
+                console.log('Knowledge Base clicked');
+                handleViewChange('knowledge');
+              }}
             >
               <BookOpen className="h-4 w-4 mr-2" />
               Knowledge Base
@@ -196,6 +210,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             <Button
               variant="ghost"
               className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              onClick={() => console.log('Templates clicked')}
             >
               <Share className="h-4 w-4 mr-2" />
               Templates
@@ -207,6 +222,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             <Button
               variant="ghost"
               className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              onClick={() => console.log('Automation clicked')}
             >
               <Zap className="h-4 w-4 mr-2" />
               Automation
@@ -218,6 +234,7 @@ export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: Dashbo
             <Button
               variant="ghost"
               className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              onClick={() => console.log('Settings clicked')}
             >
               <Settings className="h-4 w-4 mr-2" />
               Settings

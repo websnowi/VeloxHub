@@ -101,6 +101,7 @@ export const IntegrationsPanel = () => {
   const { toast } = useToast();
 
   const handleConnect = (integration: Integration) => {
+    console.log('Connecting integration:', integration.name);
     if (integration.setupRequired.every(field => setupData[field])) {
       toast({
         title: "Integration Connected",
@@ -119,7 +120,6 @@ export const IntegrationsPanel = () => {
 
   const connectedIntegrations = integrations.filter(i => i.connected);
   const availableIntegrations = integrations.filter(i => !i.connected);
-  const categories = [...new Set(integrations.map(i => i.category))];
 
   const getIntegrationsToShow = () => {
     if (viewMode === 'connected') {
@@ -138,7 +138,10 @@ export const IntegrationsPanel = () => {
         <div className="flex gap-3">
           <Button 
             variant={viewMode === 'connected' ? 'default' : 'outline'}
-            onClick={() => setViewMode('connected')}
+            onClick={() => {
+              console.log('Switching to connected view');
+              setViewMode('connected');
+            }}
             className={viewMode === 'connected' ? 
               'bg-blue-600 hover:bg-blue-700 text-white' : 
               'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -148,7 +151,10 @@ export const IntegrationsPanel = () => {
           </Button>
           <Button 
             variant={viewMode === 'all' ? 'default' : 'outline'}
-            onClick={() => setViewMode('all')}
+            onClick={() => {
+              console.log('Switching to all view');
+              setViewMode('all');
+            }}
             className={viewMode === 'all' ? 
               'bg-blue-600 hover:bg-blue-700 text-white' : 
               'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -156,7 +162,10 @@ export const IntegrationsPanel = () => {
           >
             Browse All
           </Button>
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+          <Button 
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+            onClick={() => console.log('Custom Integration clicked')}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Custom Integration
           </Button>
@@ -170,7 +179,10 @@ export const IntegrationsPanel = () => {
             <h3 className="text-lg font-semibold text-white mb-2">No Connected Integrations</h3>
             <p className="text-slate-400 mb-4">Connect your first integration to start building powerful dashboards</p>
             <Button 
-              onClick={() => setViewMode('all')}
+              onClick={() => {
+                console.log('Browse Available Integrations clicked');
+                setViewMode('all');
+              }}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Browse Available Integrations
@@ -203,7 +215,10 @@ export const IntegrationsPanel = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setSelectedIntegration(integration)}
+                  onClick={() => {
+                    console.log('Settings clicked for:', integration.name);
+                    setSelectedIntegration(integration);
+                  }}
                   className="text-slate-400 hover:text-white hover:bg-slate-700/50"
                 >
                   <Settings className="h-4 w-4" />
@@ -219,7 +234,10 @@ export const IntegrationsPanel = () => {
                   "border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50" :
                   "bg-blue-600 hover:bg-blue-700 text-white"
                 }
-                onClick={() => setSelectedIntegration(integration)}
+                onClick={() => {
+                  console.log(integration.connected ? 'Configure' : 'Connect', 'clicked for:', integration.name);
+                  setSelectedIntegration(integration);
+                }}
               >
                 {integration.connected ? "Configure" : "Connect"}
               </Button>
@@ -244,7 +262,10 @@ export const IntegrationsPanel = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setSelectedIntegration(null)}
+                  onClick={() => {
+                    console.log('Close modal clicked');
+                    setSelectedIntegration(null);
+                  }}
                   className="text-slate-400 hover:text-white hover:bg-slate-700/50"
                 >
                   ✕
@@ -258,7 +279,10 @@ export const IntegrationsPanel = () => {
                   <Input
                     id={field}
                     value={setupData[field] || ''}
-                    onChange={(e) => setSetupData(prev => ({ ...prev, [field]: e.target.value }))}
+                    onChange={(e) => {
+                      console.log('Input changed:', field, e.target.value);
+                      setSetupData(prev => ({ ...prev, [field]: e.target.value }));
+                    }}
                     className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
                     placeholder={`Enter your ${field}`}
                   />
@@ -273,7 +297,10 @@ export const IntegrationsPanel = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedIntegration(null)}
+                  onClick={() => {
+                    console.log('Cancel clicked');
+                    setSelectedIntegration(null);
+                  }}
                   className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
                 >
                   Cancel

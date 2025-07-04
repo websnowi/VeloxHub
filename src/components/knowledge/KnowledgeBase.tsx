@@ -161,7 +161,10 @@ export const KnowledgeBase = () => {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => setSelectedItem(null)}
+            onClick={() => {
+              console.log('Back to Knowledge Base clicked');
+              setSelectedItem(null);
+            }}
             className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
           >
             ← Back to Knowledge Base
@@ -202,14 +205,20 @@ export const KnowledgeBase = () => {
             </div>
             
             {selectedItem.type === 'video' && (
-              <Button className="bg-red-600 hover:bg-red-700 text-white">
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => console.log('Watch Video Tutorial clicked')}
+              >
                 <Play className="h-4 w-4 mr-2" />
                 Watch Video Tutorial
               </Button>
             )}
             
             {selectedItem.type === 'template' && (
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => console.log('Download Template clicked')}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download Template
               </Button>
@@ -235,13 +244,19 @@ export const KnowledgeBase = () => {
         <Input
           placeholder="Search guides, tutorials, and documentation..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            console.log('Search term changed:', e.target.value);
+            setSearchTerm(e.target.value);
+          }}
           className="pl-10 bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
         />
       </div>
 
       {/* Categories */}
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
+      <Tabs value={selectedCategory} onValueChange={(value) => {
+        console.log('Category changed to:', value);
+        setSelectedCategory(value);
+      }} className="space-y-4">
         <TabsList className="bg-slate-800/50 border-slate-700">
           <TabsTrigger value="all" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">All</TabsTrigger>
           {categories.map(category => (
@@ -271,7 +286,10 @@ export const KnowledgeBase = () => {
                     <Card 
                       key={item.id} 
                       className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors cursor-pointer"
-                      onClick={() => setSelectedItem(item)}
+                      onClick={() => {
+                        console.log('Popular item clicked:', item.title);
+                        setSelectedItem(item);
+                      }}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -312,7 +330,10 @@ export const KnowledgeBase = () => {
               <Card 
                 key={item.id} 
                 className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors cursor-pointer"
-                onClick={() => setSelectedItem(item)}
+                onClick={() => {
+                  console.log('Knowledge item clicked:', item.title);
+                  setSelectedItem(item);
+                }}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -357,15 +378,27 @@ export const KnowledgeBase = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start">
+            <Button 
+              variant="outline" 
+              className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start"
+              onClick={() => console.log('Community Forum clicked')}
+            >
               <ExternalLink className="h-4 w-4 mr-2" />
               Community Forum
             </Button>
-            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start">
+            <Button 
+              variant="outline" 
+              className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start"
+              onClick={() => console.log('Video Tutorials clicked')}
+            >
               <Video className="h-4 w-4 mr-2" />
               Video Tutorials
             </Button>
-            <Button variant="outline" className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start">
+            <Button 
+              variant="outline" 
+              className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 justify-start"
+              onClick={() => console.log('API Documentation clicked')}
+            >
               <FileText className="h-4 w-4 mr-2" />
               API Documentation
             </Button>
