@@ -14,7 +14,9 @@ import {
   ChevronDown,
   ChevronRight,
   Star,
-  Share
+  Share,
+  BookOpen,
+  Zap
 } from "lucide-react";
 import { useState } from "react";
 
@@ -57,6 +59,9 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
           </Button>
           <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
             <Database className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
+            <BookOpen className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
             <Settings className="h-5 w-5" />
@@ -151,6 +156,17 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
             )}
           </div>
 
+          {/* Knowledge Base Section */}
+          <div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Knowledge Base
+            </Button>
+          </div>
+
           {/* Templates Section */}
           <div>
             <Button
@@ -159,6 +175,17 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
             >
               <Share className="h-4 w-4 mr-2" />
               Templates
+            </Button>
+          </div>
+
+          {/* Automation Section */}
+          <div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Automation
             </Button>
           </div>
 

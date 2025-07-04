@@ -46,7 +46,7 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
       <div className="flex items-center gap-3">
         <Button
           size="sm"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
         >
           <Plus className="h-4 w-4 mr-2" />
           New Dashboard
@@ -63,7 +63,7 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 hover:bg-slate-700/50">
+            <Button variant="ghost" className="flex items-center gap-2 hover:bg-slate-700/50 text-white">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder.svg" />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">

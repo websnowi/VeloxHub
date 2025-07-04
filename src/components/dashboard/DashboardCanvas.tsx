@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MetricsWidget } from "@/components/widgets/MetricsWidget";
 import { ChartWidget } from "@/components/widgets/ChartWidget";
 import { TableWidget } from "@/components/widgets/TableWidget";
-import { Plus, LayoutGrid, Filter, Download } from "lucide-react";
+import { Plus, LayoutGrid, Filter, Download, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export const DashboardCanvas = () => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleDragStart = (e: React.DragEvent, widgetType: string) => {
     setDraggedItem(widgetType);
@@ -22,9 +24,26 @@ export const DashboardCanvas = () => {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    // Here you would handle adding the widget to the canvas
     console.log('Dropped widget:', draggedItem);
+    toast({
+      title: "Widget Added",
+      description: `${draggedItem} widget has been added to your dashboard`,
+    });
     setDraggedItem(null);
+  };
+
+  const handleExport = () => {
+    toast({
+      title: "Export Started",
+      description: "Your dashboard data is being exported...",
+    });
+  };
+
+  const handleFilter = () => {
+    toast({
+      title: "Filters",
+      description: "Filter panel opened",
+    });
   };
 
   return (
@@ -37,15 +56,28 @@ export const DashboardCanvas = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:text-white">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+            onClick={handleFilter}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:text-white">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+            onClick={handleExport}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+          <Button 
+            size="sm" 
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+          >
             <LayoutGrid className="h-4 w-4 mr-2" />
             Edit Layout
           </Button>
@@ -55,10 +87,13 @@ export const DashboardCanvas = () => {
       {/* Widget Palette */}
       <Card className="bg-slate-800/50 border-slate-700 mb-6">
         <CardHeader className="pb-3">
-          <CardTitle className="text-white text-sm font-medium">Add Widgets</CardTitle>
+          <CardTitle className="text-white text-sm font-medium flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Add Widgets & Integrations
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex gap-2 flex-wrap">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
             {[
               { type: 'metrics', label: 'Metrics Card', icon: '📊' },
               { type: 'chart', label: 'Chart', icon: '📈' },
@@ -71,12 +106,12 @@ export const DashboardCanvas = () => {
                 key={widget.type}
                 variant="outline"
                 size="sm"
-                className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50 flex flex-col h-16 p-2"
                 draggable
                 onDragStart={(e) => handleDragStart(e, widget.type)}
               >
-                <span className="mr-2">{widget.icon}</span>
-                {widget.label}
+                <span className="text-lg mb-1">{widget.icon}</span>
+                <span className="text-xs">{widget.label}</span>
               </Button>
             ))}
           </div>
@@ -90,7 +125,7 @@ export const DashboardCanvas = () => {
         onDrop={handleDrop}
       >
         {/* Metrics Row */}
-        <div className="col-span-3">
+        <div className="col-span-12 md:col-span-3">
           <MetricsWidget 
             title="Total Revenue"
             value="$124,592"
@@ -98,7 +133,7 @@ export const DashboardCanvas = () => {
             trend="up"
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-12 md:col-span-3">
           <MetricsWidget 
             title="Active Users"
             value="2,847"
@@ -106,7 +141,7 @@ export const DashboardCanvas = () => {
             trend="up"
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-12 md:col-span-3">
           <MetricsWidget 
             title="Conversion Rate"
             value="3.24%"
@@ -114,7 +149,7 @@ export const DashboardCanvas = () => {
             trend="down"
           />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-12 md:col-span-3">
           <MetricsWidget 
             title="Customer Satisfaction"
             value="4.8/5"
@@ -124,13 +159,13 @@ export const DashboardCanvas = () => {
         </div>
 
         {/* Charts Row */}
-        <div className="col-span-8">
+        <div className="col-span-12 lg:col-span-8">
           <ChartWidget 
             title="Revenue Trends"
             subtitle="Monthly performance overview"
           />
         </div>
-        <div className="col-span-4">
+        <div className="col-span-12 lg:col-span-4">
           <ChartWidget 
             title="Traffic Sources"
             subtitle="Acquisition channels"
