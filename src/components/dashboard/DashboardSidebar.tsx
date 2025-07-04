@@ -23,9 +23,11 @@ import { useState } from "react";
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  activeView: 'dashboard' | 'integrations' | 'knowledge';
+  onViewChange: (view: 'dashboard' | 'integrations' | 'knowledge') => void;
 }
 
-export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ collapsed, activeView, onViewChange }: DashboardSidebarProps) => {
   const [expandedSections, setExpandedSections] = useState<string[]>(['dashboards']);
 
   const toggleSection = (section: string) => {
@@ -54,13 +56,28 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
     return (
       <aside className="w-16 h-[calc(100vh-4rem)] bg-slate-800/30 backdrop-blur-lg border-r border-slate-700/50 fixed left-0 top-16 z-40">
         <div className="flex flex-col items-center py-4 gap-2">
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'dashboard' ? 'bg-slate-700/50 text-white' : ''}`}
+            onClick={() => onViewChange('dashboard')}
+          >
             <Grid2x2 className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'integrations' ? 'bg-slate-700/50 text-white' : ''}`}
+            onClick={() => onViewChange('integrations')}
+          >
             <Database className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`text-slate-300 hover:text-white hover:bg-slate-700/50 ${activeView === 'knowledge' ? 'bg-slate-700/50 text-white' : ''}`}
+            onClick={() => onViewChange('knowledge')}
+          >
             <BookOpen className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-700/50">
@@ -79,8 +96,11 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
           <div>
             <Button
               variant="ghost"
-              className="w-full justify-between text-slate-300 hover:text-white hover:bg-slate-700/50 mb-2"
-              onClick={() => toggleSection('dashboards')}
+              className={`w-full justify-between hover:text-white hover:bg-slate-700/50 mb-2 ${activeView === 'dashboard' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
+              onClick={() => {
+                toggleSection('dashboards');
+                onViewChange('dashboard');
+              }}
             >
               <div className="flex items-center gap-2">
                 <Grid2x2 className="h-4 w-4" />
@@ -122,8 +142,11 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
           <div>
             <Button
               variant="ghost"
-              className="w-full justify-between text-slate-300 hover:text-white hover:bg-slate-700/50 mb-2"
-              onClick={() => toggleSection('integrations')}
+              className={`w-full justify-between hover:text-white hover:bg-slate-700/50 mb-2 ${activeView === 'integrations' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
+              onClick={() => {
+                toggleSection('integrations');
+                onViewChange('integrations');
+              }}
             >
               <div className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
@@ -160,7 +183,8 @@ export const DashboardSidebar = ({ collapsed }: DashboardSidebarProps) => {
           <div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700/50"
+              className={`w-full justify-start hover:text-white hover:bg-slate-700/50 ${activeView === 'knowledge' ? 'bg-slate-700/50 text-white' : 'text-slate-300'}`}
+              onClick={() => onViewChange('knowledge')}
             >
               <BookOpen className="h-4 w-4 mr-2" />
               Knowledge Base

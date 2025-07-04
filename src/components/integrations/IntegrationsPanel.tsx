@@ -43,6 +43,16 @@ const integrations: Integration[] = [
     setupRequired: ['API Token', 'Organization ID']
   },
   {
+    id: 'slack',
+    name: 'Slack',
+    description: 'Team communication and notifications',
+    icon: Users,
+    category: 'Communication',
+    connected: true,
+    status: 'active',
+    setupRequired: ['Bot Token', 'Webhook URL']
+  },
+  {
     id: 'hubspot',
     name: 'HubSpot',
     description: 'Marketing automation and customer data',
@@ -61,16 +71,6 @@ const integrations: Integration[] = [
     connected: false,
     status: 'setup',
     setupRequired: ['Service Account JSON', 'View ID']
-  },
-  {
-    id: 'slack',
-    name: 'Slack',
-    description: 'Team communication and notifications',
-    icon: Users,
-    category: 'Communication',
-    connected: true,
-    status: 'active',
-    setupRequired: ['Bot Token', 'Webhook URL']
   },
   {
     id: 'wordpress',
@@ -97,6 +97,7 @@ const integrations: Integration[] = [
 export const IntegrationsPanel = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [setupData, setSetupData] = useState<Record<string, string>>({});
+  const [viewMode, setViewMode] = useState<'connected' | 'all'>('connected');
   const { toast } = useToast();
 
   const handleConnect = (integration: Integration) => {
@@ -116,7 +117,16 @@ export const IntegrationsPanel = () => {
     }
   };
 
+  const connectedIntegrations = integrations.filter(i => i.connected);
+  const availableIntegrations = integrations.filter(i => !i.connected);
   const categories = [...new Set(integrations.map(i => i.category))];
+
+  const getIntegrationsToShow = () => {
+    if (viewMode === 'connected') {
+      return connectedIntegrations;
+    }
+    return integrations;
+  };
 
   return (
     <div className="space-y-6">
@@ -125,143 +135,153 @@ export const IntegrationsPanel = () => {
           <h2 className="text-2xl font-bold text-white">Platform Integrations</h2>
           <p className="text-slate-400">Connect your business tools and data sources</p>
         </div>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Custom Integration
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant={viewMode === 'connected' ? 'default' : 'outline'}
+            onClick={() => setViewMode('connected')}
+            className={viewMode === 'connected' ? 
+              'bg-blue-600 hover:bg-blue-700 text-white' : 
+              'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
+            }
+          >
+            Connected ({connectedIntegrations.length})
+          </Button>
+          <Button 
+            variant={viewMode === 'all' ? 'default' : 'outline'}
+            onClick={() => setViewMode('all')}
+            className={viewMode === 'all' ? 
+              'bg-blue-600 hover:bg-blue-700 text-white' : 
+              'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50'
+            }
+          >
+            Browse All
+          </Button>
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Custom Integration
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="bg-slate-800/50 border-slate-700">
-          <TabsTrigger value="all" className="text-slate-300 data-[state=active]:text-white">All</TabsTrigger>
-          {categories.map(category => (
-            <TabsTrigger 
-              key={category} 
-              value={category.toLowerCase()} 
-              className="text-slate-300 data-[state=active]:text-white"
+      {viewMode === 'connected' && connectedIntegrations.length === 0 && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-8 text-center">
+            <Database className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">No Connected Integrations</h3>
+            <p className="text-slate-400 mb-4">Connect your first integration to start building powerful dashboards</p>
+            <Button 
+              onClick={() => setViewMode('all')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              Browse Available Integrations
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.map((integration) => (
-              <Card key={integration.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <integration.icon className="h-8 w-8 text-blue-400" />
-                      <div>
-                        <CardTitle className="text-white text-sm">{integration.name}</CardTitle>
-                        <Badge 
-                          variant={integration.connected ? "default" : "secondary"} 
-                          className="mt-1 text-xs"
-                        >
-                          {integration.connected ? (
-                            <><Check className="h-3 w-3 mr-1" />Connected</>
-                          ) : (
-                            <><AlertCircle className="h-3 w-3 mr-1" />Setup Required</>
-                          )}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSelectedIntegration(integration)}
-                      className="text-slate-400 hover:text-white"
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {getIntegrationsToShow().map((integration) => (
+          <Card key={integration.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <integration.icon className="h-8 w-8 text-blue-400" />
+                  <div>
+                    <CardTitle className="text-white text-sm">{integration.name}</CardTitle>
+                    <Badge 
+                      variant={integration.connected ? "default" : "secondary"} 
+                      className="mt-1 text-xs"
                     >
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                      {integration.connected ? (
+                        <><Check className="h-3 w-3 mr-1" />Connected</>
+                      ) : (
+                        <><AlertCircle className="h-3 w-3 mr-1" />Setup Required</>
+                      )}
+                    </Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-400 text-sm mb-3">{integration.description}</p>
-                  <Button
-                    size="sm"
-                    variant={integration.connected ? "outline" : "default"}
-                    className={integration.connected ? 
-                      "border-slate-600 text-slate-300 hover:text-white" :
-                      "bg-blue-600 hover:bg-blue-700 text-white"
-                    }
-                    onClick={() => setSelectedIntegration(integration)}
-                  >
-                    {integration.connected ? "Configure" : "Connect"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {categories.map(category => (
-          <TabsContent key={category} value={category.toLowerCase()} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {integrations
-                .filter(integration => integration.category === category)
-                .map((integration) => (
-                  <Card key={integration.id} className="bg-slate-800/50 border-slate-700">
-                    {/* Same card content as above */}
-                  </Card>
-                ))}
-            </div>
-          </TabsContent>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedIntegration(integration)}
+                  className="text-slate-400 hover:text-white hover:bg-slate-700/50"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 text-sm mb-3">{integration.description}</p>
+              <Button
+                size="sm"
+                variant={integration.connected ? "outline" : "default"}
+                className={integration.connected ? 
+                  "border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50" :
+                  "bg-blue-600 hover:bg-blue-700 text-white"
+                }
+                onClick={() => setSelectedIntegration(integration)}
+              >
+                {integration.connected ? "Configure" : "Connect"}
+              </Button>
+            </CardContent>
+          </Card>
         ))}
-      </Tabs>
+      </div>
 
       {/* Setup Modal */}
       {selectedIntegration && (
-        <Card className="fixed inset-4 z-50 bg-slate-900 border-slate-700 overflow-auto">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <selectedIntegration.icon className="h-8 w-8 text-blue-400" />
-                <div>
-                  <CardTitle className="text-white">Setup {selectedIntegration.name}</CardTitle>
-                  <p className="text-slate-400 text-sm">{selectedIntegration.description}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md bg-slate-900 border-slate-700 mx-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <selectedIntegration.icon className="h-8 w-8 text-blue-400" />
+                  <div>
+                    <CardTitle className="text-white">Setup {selectedIntegration.name}</CardTitle>
+                    <p className="text-slate-400 text-sm">{selectedIntegration.description}</p>
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedIntegration(null)}
+                  className="text-slate-400 hover:text-white hover:bg-slate-700/50"
+                >
+                  ✕
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedIntegration(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                ✕
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {selectedIntegration.setupRequired.map((field) => (
-              <div key={field} className="space-y-2">
-                <Label htmlFor={field} className="text-slate-300">{field}</Label>
-                <Input
-                  id={field}
-                  value={setupData[field] || ''}
-                  onChange={(e) => setSetupData(prev => ({ ...prev, [field]: e.target.value }))}
-                  className="bg-slate-800/50 border-slate-600 text-white"
-                  placeholder={`Enter your ${field}`}
-                />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {selectedIntegration.setupRequired.map((field) => (
+                <div key={field} className="space-y-2">
+                  <Label htmlFor={field} className="text-slate-300">{field}</Label>
+                  <Input
+                    id={field}
+                    value={setupData[field] || ''}
+                    onChange={(e) => setSetupData(prev => ({ ...prev, [field]: e.target.value }))}
+                    className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder={`Enter your ${field}`}
+                  />
+                </div>
+              ))}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => handleConnect(selectedIntegration)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                >
+                  Connect Integration
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedIntegration(null)}
+                  className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                >
+                  Cancel
+                </Button>
               </div>
-            ))}
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={() => handleConnect(selectedIntegration)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                Connect Integration
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedIntegration(null)}
-                className="border-slate-600 text-slate-300 hover:text-white"
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

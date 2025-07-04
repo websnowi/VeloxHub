@@ -42,21 +42,12 @@ const Index = () => {
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       <div className="flex">
-        <div onClick={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.textContent?.includes('Integrations') || target.closest('button')?.textContent?.includes('Add Integration')) {
-            setActiveView('integrations');
-          } else if (target.textContent?.includes('Knowledge Base')) {
-            setActiveView('knowledge');
-          } else if (target.textContent?.includes('Dashboards') || target.closest('button')?.textContent?.includes('Dashboard')) {
-            setActiveView('dashboard');
-          }
-        }}>
-          <DashboardSidebar 
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        </div>
+        <DashboardSidebar 
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activeView={activeView}
+          onViewChange={setActiveView}
+        />
         <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'} p-6`}>
           {renderActiveView()}
         </main>
