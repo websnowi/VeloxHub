@@ -1,11 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { DashboardCanvas } from "@/components/dashboard/DashboardCanvas";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(!isAuthenticated);
+  const [currentWorkspace, setCurrentWorkspace] = useState("My Workspace");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const handleLogin = (credentials: any) => {
+    // Simulate login for now
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+  };
+
+  if (!isAuthenticated) {
+    return <AuthModal isOpen={showAuthModal} onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <DashboardHeader 
+        workspaceName={currentWorkspace}
+        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+      <div className="flex">
+        <DashboardSidebar 
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+        <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+          <DashboardCanvas />
+        </main>
       </div>
     </div>
   );
