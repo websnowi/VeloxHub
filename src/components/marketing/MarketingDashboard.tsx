@@ -2,33 +2,24 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { 
   Globe, 
   Share2, 
   TrendingUp, 
   Users,
-  Plus,
-  Search,
-  Star,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Mail,
-  BarChart3,
   Target,
   Eye,
-  MousePointer
+  MousePointer,
+  Star,
+  BarChart3,
+  Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WebsiteManager } from "@/components/marketing/WebsiteManager";
 import { SocialMediaManager } from "@/components/marketing/SocialMediaManager";
 import { CampaignManager } from "@/components/marketing/CampaignManager";
+import { SocialAutomationService } from "@/components/marketing/SocialAutomationService";
 
 interface Website {
   id: string;
@@ -52,11 +43,11 @@ interface SocialAccount {
 export const MarketingDashboard = () => {
   const [websites, setWebsites] = useState<Website[]>([]);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
-    { id: '1', platform: 'Facebook', username: '', followers: 0, connected: false, icon: Facebook, color: 'text-blue-600' },
-    { id: '2', platform: 'Twitter', username: '', followers: 0, connected: false, icon: Twitter, color: 'text-sky-500' },
-    { id: '3', platform: 'Instagram', username: '', followers: 0, connected: false, icon: Instagram, color: 'text-pink-500' },
-    { id: '4', platform: 'LinkedIn', username: '', followers: 0, connected: false, icon: Linkedin, color: 'text-blue-700' },
-    { id: '5', platform: 'YouTube', username: '', followers: 0, connected: false, icon: Youtube, color: 'text-red-500' }
+    { id: '1', platform: 'Facebook', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-blue-600' },
+    { id: '2', platform: 'Twitter', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-sky-500' },
+    { id: '3', platform: 'Instagram', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-pink-500' },
+    { id: '4', platform: 'LinkedIn', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-blue-700' },
+    { id: '5', platform: 'YouTube', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-red-500' }
   ]);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
@@ -90,7 +81,7 @@ export const MarketingDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-slate-800/50">
+        <TabsList className="grid w-full grid-cols-6 bg-slate-800/50">
           <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Overview
           </TabsTrigger>
@@ -99,6 +90,9 @@ export const MarketingDashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="social" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Social Media
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+            Automation
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Campaigns
@@ -116,7 +110,7 @@ export const MarketingDashboard = () => {
                 <CardTitle className="text-white">Marketing Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Button 
                     onClick={() => setActiveTab('websites')}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-6 h-auto flex flex-col gap-2"
@@ -134,8 +128,16 @@ export const MarketingDashboard = () => {
                     <span className="text-sm opacity-80">Connect and manage social accounts</span>
                   </Button>
                   <Button 
-                    onClick={() => setActiveTab('campaigns')}
+                    onClick={() => setActiveTab('automation')}
                     className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto flex flex-col gap-2"
+                  >
+                    <Bot className="h-8 w-8" />
+                    <span className="font-medium">Automation</span>
+                    <span className="text-sm opacity-80">Bot rules and MCP servers</span>
+                  </Button>
+                  <Button 
+                    onClick={() => setActiveTab('campaigns')}
+                    className="bg-orange-600 hover:bg-orange-700 text-white p-6 h-auto flex flex-col gap-2"
                   >
                     <Target className="h-8 w-8" />
                     <span className="font-medium">Campaigns</span>
@@ -167,6 +169,10 @@ export const MarketingDashboard = () => {
 
         <TabsContent value="social" className="mt-6">
           <SocialMediaManager socialAccounts={socialAccounts} setSocialAccounts={setSocialAccounts} />
+        </TabsContent>
+
+        <TabsContent value="automation" className="mt-6">
+          <SocialAutomationService />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">
