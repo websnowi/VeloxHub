@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +15,8 @@ import {
   Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { WebsiteManager } from "@/components/marketing/WebsiteManager";
 import { SocialMediaManager } from "@/components/marketing/SocialMediaManager";
 import { CampaignManager } from "@/components/marketing/CampaignManager";
@@ -27,7 +28,7 @@ interface Website {
   url: string;
   status: 'active' | 'inactive';
   pages: number;
-  lastUpdated: string;
+  created_at: string;
 }
 
 interface SocialAccount {
@@ -36,21 +37,59 @@ interface SocialAccount {
   username: string;
   followers: number;
   connected: boolean;
-  icon: React.ComponentType<any>;
-  color: string;
 }
 
-export const MarketingDashboard = () => {
+interface MarketingDashboardProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboardProps) => {
   const [websites, setWebsites] = useState<Website[]>([]);
-  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
-    { id: '1', platform: 'Facebook', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-blue-600' },
-    { id: '2', platform: 'Twitter', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-sky-500' },
-    { id: '3', platform: 'Instagram', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-pink-500' },
-    { id: '4', platform: 'LinkedIn', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-blue-700' },
-    { id: '5', platform: 'YouTube', username: '', followers: 0, connected: false, icon: () => <Share2 className="h-4 w-4" />, color: 'text-red-500' }
-  ]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      loadWebsites();
+      loadSocialAccounts();
+    }
+  }, [user]);
+
+  const loadWebsites = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('websites')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setWebsites(data || []);
+    } catch (error) {
+      console.error('Error loading websites:', error);
+    }
+  };
+
+  const loadSocialAccounts = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSocialAccounts(data || []);
+    } catch (error) {
+      console.error('Error loading social accounts:', error);
+    }
+  };
 
   const marketingStats = [
     { title: "Websites", value: websites.length.toString(), icon: Globe, color: "text-blue-400" },
@@ -80,7 +119,7 @@ export const MarketingDashboard = () => {
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-6 bg-slate-800/50">
           <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Overview
@@ -92,7 +131,7 @@ export const MarketingDashboard = () => {
             Social Media
           </TabsTrigger>
           <TabsTrigger value="automation" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-            Automation
+            Social Bots
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Campaigns
@@ -164,11 +203,11 @@ export const MarketingDashboard = () => {
         </TabsContent>
 
         <TabsContent value="websites" className="mt-6">
-          <WebsiteManager websites={websites} setWebsites={setWebsites} />
+          <WebsiteManager websites={websites} setWebsites={setWebsites} onUpdate={loadWebsites} />
         </TabsContent>
 
         <TabsContent value="social" className="mt-6">
-          <SocialMediaManager socialAccounts={socialAccounts} setSocialAccounts={setSocialAccounts} />
+          <SocialMediaManager socialAccounts={socialAccounts} setSocialAccounts={setSocialAccounts} onUpdate={loadSocialAccounts} />
         </TabsContent>
 
         <TabsContent value="automation" className="mt-6">
