@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -89,9 +88,6 @@ const AppContent = () => {
       case 'hr':
         return <HRDashboard />;
       case 'marketing':
-        if (activeTab === 'automation') {
-          return <SocialMediaBotManager />;
-        }
         return <MarketingDashboard activeTab={activeTab} onTabChange={setActiveTab} />;
       case 'integrations':
         return <IntegrationsPanel />;
@@ -100,7 +96,7 @@ const AppContent = () => {
       case 'settings':
         return <SettingsPanel />;
       default:
-        return <DashboardCanvas />;
+        return <DashboardCanvas activeTab={activeTab} onTabChange={setActiveTab} />;
     }
   };
 
@@ -108,7 +104,6 @@ const AppContent = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <DashboardHeader 
         onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-        sidebarCollapsed={sidebarCollapsed}
       />
       
       <div className="flex">

@@ -4,13 +4,44 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Settings, Menu, Plus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHeaderProps {
-  workspaceName: string;
   onToggleSidebar: () => void;
 }
 
-export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
+  const { user, signOut } = useAuth();
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data && data.username) {
+      setUsername(data.username);
+    } else {
+      setUsername(user.email?.split('@')[0] || 'User');
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+  };
+
   return (
     <header className="h-16 bg-slate-800/50 backdrop-blur-lg border-b border-slate-700/50 flex items-center justify-between px-6 sticky top-0 z-50">
       <div className="flex items-center gap-4">
@@ -29,7 +60,7 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
           </div>
           <h1 className="text-xl font-bold text-white">VeloxHub</h1>
           <span className="text-slate-400">|</span>
-          <span className="text-slate-300">{workspaceName}</span>
+          <span className="text-slate-300">Business Dashboard</span>
         </div>
       </div>
 
@@ -45,14 +76,6 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
 
       <div className="flex items-center gap-3">
         <Button
-          size="sm"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Dashboard
-        </Button>
-
-        <Button
           variant="ghost"
           size="icon"
           className="text-slate-300 hover:text-white hover:bg-slate-700/50 relative"
@@ -67,10 +90,10 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder.svg" />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                  JD
+                  {getInitials(username)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-slate-300">John Doe</span>
+              <span className="text-slate-300">{username}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
@@ -78,7 +101,10 @@ export const DashboardHeader = ({ workspaceName, onToggleSidebar }: DashboardHea
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-slate-300 hover:text-white hover:bg-slate-700">
+            <DropdownMenuItem 
+              onClick={signOut}
+              className="text-slate-300 hover:text-white hover:bg-slate-700"
+            >
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

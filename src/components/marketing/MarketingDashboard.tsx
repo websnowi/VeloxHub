@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ interface Website {
   status: 'active' | 'inactive';
   pages: number;
   created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 interface SocialAccount {
@@ -37,6 +40,12 @@ interface SocialAccount {
   username: string;
   followers: number;
   connected: boolean;
+  display_name?: string;
+  avatar_url?: string;
+  password: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 interface MarketingDashboardProps {
@@ -120,7 +129,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
       </div>
 
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-slate-800/50">
+        <TabsList className="grid w-full grid-cols-5 bg-slate-800/50">
           <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Overview
           </TabsTrigger>
@@ -129,9 +138,6 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
           </TabsTrigger>
           <TabsTrigger value="social" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Social Media
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-            Social Bots
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Campaigns
@@ -151,7 +157,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Button 
-                    onClick={() => setActiveTab('websites')}
+                    onClick={() => onTabChange('websites')}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-6 h-auto flex flex-col gap-2"
                   >
                     <Globe className="h-8 w-8" />
@@ -159,7 +165,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
                     <span className="text-sm opacity-80">Add and manage your web properties</span>
                   </Button>
                   <Button 
-                    onClick={() => setActiveTab('social')}
+                    onClick={() => onTabChange('social')}
                     className="bg-green-600 hover:bg-green-700 text-white p-6 h-auto flex flex-col gap-2"
                   >
                     <Share2 className="h-8 w-8" />
@@ -167,20 +173,20 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
                     <span className="text-sm opacity-80">Connect and manage social accounts</span>
                   </Button>
                   <Button 
-                    onClick={() => setActiveTab('automation')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto flex flex-col gap-2"
-                  >
-                    <Bot className="h-8 w-8" />
-                    <span className="font-medium">Automation</span>
-                    <span className="text-sm opacity-80">Bot rules and MCP servers</span>
-                  </Button>
-                  <Button 
-                    onClick={() => setActiveTab('campaigns')}
+                    onClick={() => onTabChange('campaigns')}
                     className="bg-orange-600 hover:bg-orange-700 text-white p-6 h-auto flex flex-col gap-2"
                   >
                     <Target className="h-8 w-8" />
                     <span className="font-medium">Campaigns</span>
                     <span className="text-sm opacity-80">Create and track marketing campaigns</span>
+                  </Button>
+                  <Button 
+                    onClick={() => onTabChange('analytics')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white p-6 h-auto flex flex-col gap-2"
+                  >
+                    <BarChart3 className="h-8 w-8" />
+                    <span className="font-medium">Analytics</span>
+                    <span className="text-sm opacity-80">View performance metrics</span>
                   </Button>
                 </div>
               </CardContent>
@@ -208,10 +214,6 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
 
         <TabsContent value="social" className="mt-6">
           <SocialMediaManager socialAccounts={socialAccounts} setSocialAccounts={setSocialAccounts} onUpdate={loadSocialAccounts} />
-        </TabsContent>
-
-        <TabsContent value="automation" className="mt-6">
-          <SocialAutomationService />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">
