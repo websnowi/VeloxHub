@@ -56,9 +56,9 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
         
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">VH</span>
+            <span className="text-white font-bold text-sm">NX</span>
           </div>
-          <h1 className="text-xl font-bold text-white">VeloxHub</h1>
+          <h1 className="text-xl font-bold text-white">Nexapanel</h1>
           <span className="text-slate-400">|</span>
           <span className="text-slate-300">Business Dashboard</span>
         </div>
