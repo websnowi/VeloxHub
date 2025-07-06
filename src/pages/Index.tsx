@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -62,7 +63,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Welcome to Business Dashboard</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Welcome to Nexapanel</h1>
           <p className="text-xl text-slate-300 mb-8">Manage your business operations in one place</p>
           <Button
             onClick={() => setShowAuthModal(true)}

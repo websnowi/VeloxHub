@@ -77,7 +77,15 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWebsites(data || []);
+      
+      // Map the data to ensure proper typing
+      const typedData: Website[] = (data || []).map(item => ({
+        ...item,
+        status: (item.status as 'active' | 'inactive') || 'active',
+        pages: item.pages || 0
+      }));
+      
+      setWebsites(typedData);
     } catch (error) {
       console.error('Error loading websites:', error);
     }
@@ -209,7 +217,11 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         </TabsContent>
 
         <TabsContent value="websites" className="mt-6">
-          <WebsiteManager websites={websites} setWebsites={setWebsites} onUpdate={loadWebsites} />
+          <WebsiteManager 
+            websites={websites} 
+            setWebsites={setWebsites} 
+            onUpdate={loadWebsites} 
+          />
         </TabsContent>
 
         <TabsContent value="social" className="mt-6">

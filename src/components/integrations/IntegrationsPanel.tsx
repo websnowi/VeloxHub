@@ -3,17 +3,22 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Zap, 
   Plus, 
   Settings, 
-  Trash2, 
-  Link,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+  CheckCircle, 
+  XCircle, 
+  AlertCircle,
+  Zap,
+  Database,
+  Mail,
+  Calendar,
+  MessageSquare,
+  BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,35 +28,23 @@ interface Integration {
   id: string;
   name: string;
   type: string;
-  status: 'connected' | 'disconnected' | 'error';
-  config: any;
+  status: "connected" | "error" | "disconnected";
   api_key?: string;
   webhook_url?: string;
+  config?: any;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
-
-const availableIntegrations = [
-  { type: 'notion', name: 'Notion', description: 'Connect your Notion workspace', color: 'bg-black' },
-  { type: 'salesforce', name: 'Salesforce', description: 'CRM integration', color: 'bg-blue-600' },
-  { type: 'hubspot', name: 'HubSpot', description: 'Marketing automation', color: 'bg-orange-500' },
-  { type: 'google-analytics', name: 'Google Analytics', description: 'Website analytics', color: 'bg-orange-600' },
-  { type: 'slack', name: 'Slack', description: 'Team communication', color: 'bg-purple-600' },
-  { type: 'zapier', name: 'Zapier', description: 'Workflow automation', color: 'bg-orange-400' },
-  { type: 'mailchimp', name: 'MailChimp', description: 'Email marketing', color: 'bg-yellow-500' },
-  { type: 'stripe', name: 'Stripe', description: 'Payment processing', color: 'bg-indigo-600' },
-  { type: 'airtable', name: 'Airtable', description: 'Database management', color: 'bg-yellow-600' },
-  { type: 'trello', name: 'Trello', description: 'Project management', color: 'bg-blue-500' }
-];
 
 export const IntegrationsPanel = () => {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedIntegrationType, setSelectedIntegrationType] = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newIntegration, setNewIntegration] = useState({
-    name: '',
-    api_key: '',
-    webhook_url: ''
+    name: "",
+    type: "",
+    api_key: "",
+    webhook_url: ""
   });
   const { user } = useAuth();
   const { toast } = useToast();
@@ -73,320 +66,257 @@ export const IntegrationsPanel = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setIntegrations(data || []);
+      
+      // Map the data to ensure proper typing
+      const typedData: Integration[] = (data || []).map(item => ({
+        ...item,
+        status: (item.status as "connected" | "error" | "disconnected") || "disconnected"
+      }));
+      
+      setIntegrations(typedData);
     } catch (error) {
       console.error('Error loading integrations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load integrations",
+        variant: "destructive"
+      });
     }
   };
 
-  const addIntegration = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user || !selectedIntegrationType || !newIntegration.name) {
+  const addIntegration = async () => {
+    if (!user || !newIntegration.name || !newIntegration.type) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
       });
       return;
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('integrations')
-        .insert({
-          user_id: user.id,
-          name: newIntegration.name,
-          type: selectedIntegrationType,
-          status: 'disconnected',
-          api_key: newIntegration.api_key || null,
-          webhook_url: newIntegration.webhook_url || null,
-          config: {}
-        });
+        .insert([
+          {
+            name: newIntegration.name,
+            type: newIntegration.type,
+            api_key: newIntegration.api_key,
+            webhook_url: newIntegration.webhook_url,
+            status: 'connected',
+            user_id: user.id
+          }
+        ])
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setNewIntegration({ name: '', api_key: '', webhook_url: '' });
-      setSelectedIntegrationType('');
-      setShowAddForm(false);
-      loadIntegrations();
+      const typedData: Integration = {
+        ...data,
+        status: (data.status as "connected" | "error" | "disconnected") || "connected"
+      };
+
+      setIntegrations(prev => [typedData, ...prev]);
+      setNewIntegration({ name: "", type: "", api_key: "", webhook_url: "" });
+      setIsAddDialogOpen(false);
       
       toast({
-        title: "Integration Added",
-        description: `${newIntegration.name} has been added successfully.`,
+        title: "Success",
+        description: "Integration added successfully"
       });
     } catch (error) {
       console.error('Error adding integration:', error);
       toast({
         title: "Error",
-        description: "Failed to add integration. Please try again.",
-        variant: "destructive",
+        description: "Failed to add integration",
+        variant: "destructive"
       });
     }
   };
 
-  const deleteIntegration = async (integrationId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('integrations')
-        .delete()
-        .eq('id', integrationId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      loadIntegrations();
-      toast({
-        title: "Integration Removed",
-        description: "Integration has been removed.",
-      });
-    } catch (error) {
-      console.error('Error deleting integration:', error);
-      toast({
-        title: "Error",
-        description: "Failed to remove integration.",
-        variant: "destructive",
-      });
+  const getIntegrationIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'salesforce': return <Database className="h-5 w-5" />;
+      case 'mailchimp': return <Mail className="h-5 w-5" />;
+      case 'google analytics': return <BarChart3 className="h-5 w-5" />;
+      case 'slack': return <MessageSquare className="h-5 w-5" />;
+      case 'notion': return <Database className="h-5 w-5" />;
+      case 'calendar': return <Calendar className="h-5 w-5" />;
+      default: return <Zap className="h-5 w-5" />;
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: Integration['status']) => {
     switch (status) {
       case 'connected':
         return <CheckCircle className="h-4 w-4 text-green-400" />;
       case 'error':
         return <XCircle className="h-4 w-4 text-red-400" />;
-      default:
+      case 'disconnected':
         return <AlertCircle className="h-4 w-4 text-yellow-400" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'bg-green-600';
-      case 'error':
-        return 'bg-red-600';
-      default:
-        return 'bg-yellow-600';
-    }
+  const getStatusBadge = (status: Integration['status']) => {
+    const variants = {
+      connected: "bg-green-900/20 text-green-400 border-green-400/20",
+      error: "bg-red-900/20 text-red-400 border-red-400/20",
+      disconnected: "bg-yellow-900/20 text-yellow-400 border-yellow-400/20"
+    };
+    
+    return (
+      <Badge className={variants[status] || variants.disconnected}>
+        {getStatusIcon(status)}
+        <span className="ml-1">{status}</span>
+      </Badge>
+    );
   };
+
+  const integrationTypes = [
+    "Salesforce",
+    "Mailchimp", 
+    "Google Analytics",
+    "Slack",
+    "Notion",
+    "Zapier",
+    "HubSpot",
+    "Stripe",
+    "PayPal",
+    "Shopify"
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Zap className="h-6 w-6 text-blue-400" />
-          <div>
-            <h2 className="text-2xl font-bold text-white">Integrations</h2>
-            <p className="text-slate-400">Connect your favorite tools and services</p>
-          </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Integrations</h2>
+          <p className="text-slate-400">Connect your favorite tools and services</p>
         </div>
-        <Button
-          onClick={() => setShowAddForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Integration
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-              </div>
+        
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Integration
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-800 border-slate-700 text-white">
+            <DialogHeader>
+              <DialogTitle>Add New Integration</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
-                <p className="text-sm text-slate-400">Connected</p>
-                <p className="text-xl font-bold text-white">
-                  {integrations.filter(i => i.status === 'connected').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/10 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-400">Pending</p>
-                <p className="text-xl font-bold text-white">
-                  {integrations.filter(i => i.status === 'disconnected').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Zap className="h-5 w-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-400">Total</p>
-                <p className="text-xl font-bold text-white">{integrations.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Integrations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {integrations.map((integration) => (
-          <Card key={integration.id} className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    availableIntegrations.find(i => i.type === integration.type)?.color || 'bg-slate-600'
-                  }`}>
-                    <Link className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">{integration.name}</h4>
-                    <p className="text-sm text-slate-400 capitalize">{integration.type}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(integration.status)}
-                  <Badge className={getStatusColor(integration.status)}>
-                    {integration.status}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
-                >
-                  <Settings className="h-3 w-3 mr-1" />
-                  Configure
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => deleteIntegration(integration.id)}
-                  className="border-red-600 text-red-400 hover:text-red-300 hover:bg-red-600/10"
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Remove
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {integrations.length === 0 && (
-          <Card className="bg-slate-800/50 border-slate-700 col-span-full">
-            <CardContent className="p-8 text-center">
-              <Zap className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">No Integrations</h3>
-              <p className="text-slate-400 mb-4">Connect your favorite tools to streamline your workflow</p>
-              <Button
-                onClick={() => setShowAddForm(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Integration
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Add Integration Form */}
-      {showAddForm && (
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white">Add New Integration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={addIntegration} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-slate-300">Integration Type *</Label>
-                <select
-                  value={selectedIntegrationType}
-                  onChange={(e) => setSelectedIntegrationType(e.target.value)}
-                  className="w-full bg-slate-700/50 border border-slate-600 text-white rounded-md px-3 py-2"
-                  required
-                >
-                  <option value="">Select Integration</option>
-                  {availableIntegrations.map((integration) => (
-                    <option key={integration.type} value={integration.type}>
-                      {integration.name} - {integration.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="integrationName" className="text-slate-300">Integration Name *</Label>
+                <Label htmlFor="name">Integration Name</Label>
                 <Input
-                  id="integrationName"
+                  id="name"
                   value={newIntegration.name}
                   onChange={(e) => setNewIntegration(prev => ({ ...prev, name: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                  placeholder="Enter a name for this integration"
-                  required
+                  placeholder="e.g., My Salesforce"
+                  className="bg-slate-700 border-slate-600 text-white"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="apiKey" className="text-slate-300">API Key (Optional)</Label>
+              <div>
+                <Label htmlFor="type">Integration Type</Label>
+                <Select value={newIntegration.type} onValueChange={(value) => setNewIntegration(prev => ({ ...prev, type: value }))}>
+                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectValue placeholder="Select integration type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {integrationTypes.map((type) => (
+                      <SelectItem key={type} value={type} className="text-white hover:bg-slate-700">
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="api_key">API Key (Optional)</Label>
                 <Input
-                  id="apiKey"
+                  id="api_key"
                   type="password"
                   value={newIntegration.api_key}
                   onChange={(e) => setNewIntegration(prev => ({ ...prev, api_key: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                  placeholder="Enter API key if required"
+                  placeholder="Enter API key"
+                  className="bg-slate-700 border-slate-600 text-white"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="webhookUrl" className="text-slate-300">Webhook URL (Optional)</Label>
+              <div>
+                <Label htmlFor="webhook_url">Webhook URL (Optional)</Label>
                 <Input
-                  id="webhookUrl"
+                  id="webhook_url"
                   value={newIntegration.webhook_url}
                   onChange={(e) => setNewIntegration(prev => ({ ...prev, webhook_url: e.target.value }))}
-                  className="bg-slate-700/50 border-slate-600 text-white"
-                  placeholder="Enter webhook URL if needed"
+                  placeholder="https://your-webhook-url.com"
+                  className="bg-slate-700 border-slate-600 text-white"
                 />
               </div>
               
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Add Integration
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAddForm(false)}
-                  className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+              <Button onClick={addIntegration} className="w-full bg-blue-600 hover:bg-blue-700">
+                Add Integration
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {integrations.length === 0 ? (
+          <Card className="col-span-full bg-slate-800/50 border-slate-700">
+            <CardContent className="p-8 text-center">
+              <Zap className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">No Integrations Yet</h3>
+              <p className="text-slate-400 mb-4">Connect your first integration to get started</p>
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Integration
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          integrations.map((integration) => (
+            <Card key={integration.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-700/50 rounded-lg">
+                      {getIntegrationIcon(integration.type)}
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-sm">{integration.name}</CardTitle>
+                      <p className="text-xs text-slate-400">{integration.type}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between">
+                  {getStatusBadge(integration.status)}
+                  <div className="text-xs text-slate-500">
+                    {new Date(integration.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
