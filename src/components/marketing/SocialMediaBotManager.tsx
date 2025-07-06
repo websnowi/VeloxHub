@@ -80,7 +80,16 @@ export const SocialMediaBotManager = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBots(data || []);
+      
+      // Map the data to ensure proper typing
+      const typedData: SocialBot[] = (data || []).map(item => ({
+        ...item,
+        status: (item.status as 'active' | 'paused' | 'error') || 'paused',
+        runs_today: item.runs_today || 0,
+        platforms: item.platforms || []
+      }));
+      
+      setBots(typedData);
     } catch (error) {
       console.error('Error loading bots:', error);
     }
