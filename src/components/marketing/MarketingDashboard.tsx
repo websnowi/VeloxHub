@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,31 +22,10 @@ import { WebsiteManager } from "@/components/marketing/WebsiteManager";
 import { SocialMediaManager } from "@/components/marketing/SocialMediaManager";
 import { CampaignManager } from "@/components/marketing/CampaignManager";
 import { SocialAutomationService } from "@/components/marketing/SocialAutomationService";
+import { Database } from "@/integrations/supabase/types";
 
-interface Website {
-  id: string;
-  name: string;
-  url: string;
-  status: 'active' | 'inactive';
-  pages: number;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
-
-interface SocialAccount {
-  id: string;
-  platform: string;
-  username: string;
-  followers: number;
-  connected: boolean;
-  display_name?: string;
-  avatar_url?: string;
-  password: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
+type Website = Database['public']['Tables']['websites']['Row'];
+type SocialAccount = Database['public']['Tables']['social_accounts']['Row'];
 
 interface MarketingDashboardProps {
   activeTab: string;
@@ -85,15 +63,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Map the data to ensure proper typing
-      const typedData: Website[] = (data || []).map(item => ({
-        ...item,
-        status: (item.status as 'active' | 'inactive') || 'inactive',
-        pages: item.pages || 0
-      }));
-      
-      setWebsites(typedData);
+      setWebsites(data || []);
     } catch (error) {
       console.error('Error loading websites:', error);
     }
@@ -132,7 +102,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
   const marketingStats = [
     { title: "Websites", value: websites.length.toString(), icon: Globe, color: "text-blue-400" },
     { title: "Social Accounts", value: socialAccounts.filter(acc => acc.connected).length.toString(), icon: Share2, color: "text-green-400" },
-    { title: "Total Followers", value: socialAccounts.reduce((sum, acc) => sum + acc.followers, 0).toLocaleString(), icon: Users, color: "text-purple-400" },
+    { title: "Total Followers", value: socialAccounts.reduce((sum, acc) => sum + (acc.followers || 0), 0).toLocaleString(), icon: Users, color: "text-purple-400" },
     { title: "Active Campaigns", value: "0", icon: Target, color: "text-yellow-400" }
   ];
 
@@ -245,7 +215,11 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         </TabsContent>
 
         <TabsContent value="social" className="mt-6">
-          <SocialMediaManager socialAccounts={socialAccounts} onUpdate={loadSocialAccounts} />
+          <SocialMediaManager 
+            socialAccounts={socialAccounts} 
+            onUpdate={loadSocialAccounts}
+            setSocialAccounts={setSocialAccounts}
+          />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">

@@ -25,18 +25,9 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
 
-interface UserActivity {
-  id: string;
-  activity_type: string;
-  activity_action: string;
-  resource_type?: string;
-  resource_id?: string;
-  resource_name?: string;
-  description?: string;
-  metadata?: Record<string, any>;
-  created_at: string;
-}
+type UserActivity = Database['public']['Tables']['user_activities']['Row'];
 
 const activityIcons: Record<string, any> = {
   hr_management: Users,
