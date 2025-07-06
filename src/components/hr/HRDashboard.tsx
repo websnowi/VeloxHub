@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,7 @@ import {
   MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
 import { EmployeeForm } from "@/components/hr/EmployeeForm";
 import { PayrollManager } from "@/components/hr/PayrollManager";
 
@@ -50,6 +50,7 @@ export const HRDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const handleAddEmployee = (employeeData: any) => {
     const newEmployee: Employee = {
@@ -60,9 +61,32 @@ export const HRDashboard = () => {
     };
     setEmployees([...employees, newEmployee]);
     setShowEmployeeForm(false);
+    
+    // Log employee creation
+    logActivity({
+      activityType: 'employee_management',
+      activityAction: 'create',
+      resourceType: 'employee',
+      resourceId: newEmployee.id,
+      resourceName: newEmployee.name,
+      description: `Added new employee: ${newEmployee.name}`,
+      metadata: { position: newEmployee.position, department: newEmployee.department }
+    });
+    
     toast({
       title: "Employee Added",
       description: "New employee has been successfully added to the system.",
+    });
+  };
+
+  const handleTabChange = (tab: string) => {
+    // Log tab navigation
+    logActivity({
+      activityType: 'hr_management',
+      activityAction: 'view',
+      resourceType: 'tab',
+      resourceName: tab,
+      description: `Navigated to ${tab} tab in HR dashboard`
     });
   };
 
@@ -109,7 +133,7 @@ export const HRDashboard = () => {
         ))}
       </div>
 
-      <Tabs defaultValue="employees" className="w-full">
+      <Tabs defaultValue="employees" onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
           <TabsTrigger value="employees" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Employees

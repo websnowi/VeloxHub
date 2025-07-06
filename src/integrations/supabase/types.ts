@@ -294,6 +294,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activities: {
+        Row: {
+          activity_action: Database["public"]["Enums"]["activity_action"]
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string
+          description: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_name: string | null
+          resource_type: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_action: Database["public"]["Enums"]["activity_action"]
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_action?: Database["public"]["Enums"]["activity_action"]
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_name?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       websites: {
         Row: {
           created_at: string
@@ -332,10 +377,47 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_user_activity: {
+        Args: {
+          p_activity_type: Database["public"]["Enums"]["activity_type"]
+          p_activity_action: Database["public"]["Enums"]["activity_action"]
+          p_resource_type?: string
+          p_resource_id?: string
+          p_resource_name?: string
+          p_description?: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      activity_action:
+        | "create"
+        | "update"
+        | "delete"
+        | "view"
+        | "export"
+        | "import"
+        | "login"
+        | "logout"
+        | "connect"
+        | "disconnect"
+        | "publish"
+        | "schedule"
+        | "approve"
+        | "reject"
+      activity_type:
+        | "hr_management"
+        | "website_management"
+        | "social_media_management"
+        | "marketing_campaigns"
+        | "payroll_management"
+        | "attendance_tracking"
+        | "reports_generation"
+        | "analytics_viewing"
+        | "employee_management"
+        | "integration_management"
+        | "dashboard_management"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -450,6 +532,36 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      activity_action: [
+        "create",
+        "update",
+        "delete",
+        "view",
+        "export",
+        "import",
+        "login",
+        "logout",
+        "connect",
+        "disconnect",
+        "publish",
+        "schedule",
+        "approve",
+        "reject",
+      ],
+      activity_type: [
+        "hr_management",
+        "website_management",
+        "social_media_management",
+        "marketing_campaigns",
+        "payroll_management",
+        "attendance_tracking",
+        "reports_generation",
+        "analytics_viewing",
+        "employee_management",
+        "integration_management",
+        "dashboard_management",
+      ],
+    },
   },
 } as const

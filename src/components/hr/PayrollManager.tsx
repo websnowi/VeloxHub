@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
 
 interface Employee {
   id: string;
@@ -45,6 +45,7 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState('current');
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const generatePayroll = () => {
     const currentDate = new Date();
@@ -69,6 +70,21 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
     });
 
     setPayrollRecords(newRecords);
+    
+    // Log payroll generation
+    logActivity({
+      activityType: 'payroll_management',
+      activityAction: 'create',
+      resourceType: 'payroll',
+      resourceName: `Payroll ${payPeriod}`,
+      description: `Generated payroll for ${employees.length} employees for period ${payPeriod}`,
+      metadata: { 
+        employeeCount: employees.length,
+        totalGrossPay: newRecords.reduce((sum, r) => sum + r.grossPay, 0),
+        payPeriod 
+      }
+    });
+    
     toast({
       title: "Payroll Generated",
       description: `Payroll has been generated for ${employees.length} employees.`,
@@ -76,6 +92,8 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
   };
 
   const processPayroll = (recordId: string) => {
+    const record = payrollRecords.find(r => r.id === recordId);
+    
     setPayrollRecords(prev => 
       prev.map(record => 
         record.id === recordId 
@@ -83,6 +101,20 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
           : record
       )
     );
+    
+    // Log payroll processing
+    if (record) {
+      logActivity({
+        activityType: 'payroll_management',
+        activityAction: 'update',
+        resourceType: 'payroll_record',
+        resourceId: recordId,
+        resourceName: `Payroll for ${record.employeeName}`,
+        description: `Processed payroll record for ${record.employeeName}`,
+        metadata: { netPay: record.netPay, status: 'processed' }
+      });
+    }
+    
     toast({
       title: "Payroll Processed",
       description: "Payroll record has been processed successfully.",
@@ -90,6 +122,8 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
   };
 
   const sendPayment = (recordId: string) => {
+    const record = payrollRecords.find(r => r.id === recordId);
+    
     setPayrollRecords(prev => 
       prev.map(record => 
         record.id === recordId 
@@ -97,6 +131,20 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
           : record
       )
     );
+    
+    // Log payment sending
+    if (record) {
+      logActivity({
+        activityType: 'payroll_management',
+        activityAction: 'update',
+        resourceType: 'payroll_record',
+        resourceId: recordId,
+        resourceName: `Payment to ${record.employeeName}`,
+        description: `Sent payment of $${record.netPay.toLocaleString()} to ${record.employeeName}`,
+        metadata: { netPay: record.netPay, status: 'paid' }
+      });
+    }
+    
     toast({
       title: "Payment Sent",
       description: "Payment has been sent to employee's bank account.",
@@ -199,6 +247,11 @@ export const PayrollManager = ({ employees }: PayrollManagerProps) => {
               <Button 
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                onClick={() => logActivity({
+                  activityType: 'payroll_management',
+                  activityAction: 'export',
+                  description: 'Exported payroll data'
+                })}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export

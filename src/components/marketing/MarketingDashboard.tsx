@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
 import { supabase } from "@/integrations/supabase/client";
 import { WebsiteManager } from "@/components/marketing/WebsiteManager";
 import { SocialMediaManager } from "@/components/marketing/SocialMediaManager";
@@ -58,11 +59,18 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   useEffect(() => {
     if (user) {
       loadWebsites();
       loadSocialAccounts();
+      // Log dashboard view
+      logActivity({
+        activityType: 'marketing_campaigns',
+        activityAction: 'view',
+        description: 'Viewed marketing dashboard'
+      });
     }
   }, [user]);
 
@@ -81,7 +89,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
       // Map the data to ensure proper typing
       const typedData: Website[] = (data || []).map(item => ({
         ...item,
-        status: (item.status as 'active' | 'inactive') || 'active',
+        status: (item.status as 'active' | 'inactive') || 'inactive',
         pages: item.pages || 0
       }));
       
@@ -106,6 +114,19 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
     } catch (error) {
       console.error('Error loading social accounts:', error);
     }
+  };
+
+  const handleTabChange = (tab: string) => {
+    onTabChange(tab);
+    
+    // Log tab navigation
+    logActivity({
+      activityType: 'marketing_campaigns',
+      activityAction: 'view',
+      resourceType: 'tab',
+      resourceName: tab,
+      description: `Navigated to ${tab} tab in marketing dashboard`
+    });
   };
 
   const marketingStats = [
@@ -136,7 +157,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5 bg-slate-800/50">
           <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
             Overview
@@ -219,13 +240,12 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         <TabsContent value="websites" className="mt-6">
           <WebsiteManager 
             websites={websites} 
-            setWebsites={setWebsites} 
             onUpdate={loadWebsites} 
           />
         </TabsContent>
 
         <TabsContent value="social" className="mt-6">
-          <SocialMediaManager socialAccounts={socialAccounts} setSocialAccounts={setSocialAccounts} onUpdate={loadSocialAccounts} />
+          <SocialMediaManager socialAccounts={socialAccounts} onUpdate={loadSocialAccounts} />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-6">

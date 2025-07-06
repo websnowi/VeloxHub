@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Bell, Settings, Menu, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Bell, Settings, Menu, Plus, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityViewer } from "@/components/activities/ActivityViewer";
 
 interface DashboardHeaderProps {
   onToggleSidebar: () => void;
@@ -15,6 +17,7 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const { user, signOut } = useAuth();
   const [username, setUsername] = useState("");
+  const [showActivities, setShowActivities] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -75,6 +78,24 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
       </div>
 
       <div className="flex items-center gap-3">
+        <Dialog open={showActivities} onOpenChange={setShowActivities}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+            >
+              <Activity className="h-5 w-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-6xl max-h-[80vh] overflow-auto bg-slate-900 border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Activity Log</DialogTitle>
+            </DialogHeader>
+            <ActivityViewer />
+          </DialogContent>
+        </Dialog>
+
         <Button
           variant="ghost"
           size="icon"
