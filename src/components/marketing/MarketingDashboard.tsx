@@ -25,8 +25,15 @@ import { CampaignManager } from "@/components/marketing/CampaignManager";
 import { SocialAutomationService } from "@/components/marketing/SocialAutomationService";
 import { Database } from "@/integrations/supabase/types";
 
-type Website = Database['public']['Tables']['websites']['Row'];
-type SocialAccount = Database['public']['Tables']['social_accounts']['Row'];
+type DatabaseWebsite = Database['public']['Tables']['websites']['Row'];
+type DatabaseSocialAccount = Database['public']['Tables']['social_accounts']['Row'];
+
+// Create proper interfaces that match what components expect
+interface Website extends DatabaseWebsite {
+  lastUpdated?: string;
+}
+
+interface SocialAccount extends DatabaseSocialAccount {}
 
 interface MarketingDashboardProps {
   activeTab: string;
@@ -64,7 +71,14 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWebsites(data || []);
+      
+      // Transform the data to include lastUpdated
+      const transformedData: Website[] = (data || []).map(website => ({
+        ...website,
+        lastUpdated: website.updated_at
+      }));
+      
+      setWebsites(transformedData);
     } catch (error) {
       console.error('Error loading websites:', error);
     }
@@ -98,6 +112,10 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
       resourceName: tab,
       description: `Navigated to ${tab} tab in marketing dashboard`
     });
+  };
+
+  const handleSocialAccountsUpdate = (accounts: SocialAccount[]) => {
+    setSocialAccounts(accounts);
   };
 
   const marketingStats = [
@@ -219,7 +237,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
           <SocialMediaManager 
             socialAccounts={socialAccounts} 
             onUpdate={loadSocialAccounts}
-            setSocialAccounts={setSocialAccounts}
+            setSocialAccounts={handleSocialAccountsUpdate}
           />
         </TabsContent>
 

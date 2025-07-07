@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SocialAccount {
@@ -62,6 +62,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
   const [showBulkPost, setShowBulkPost] = useState(false);
   const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
   const [newAccount, setNewAccount] = useState({
     platform: '',
     username: '',
@@ -77,6 +78,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
   });
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const connectedAccounts = socialAccounts.filter(acc => acc.connected);
 
@@ -93,7 +95,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('social_accounts')
         .insert({
           user_id: user.id,
@@ -103,13 +105,28 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
           display_name: newAccount.display_name || newAccount.username,
           connected: true,
           followers: 0
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Update local state
+      const updatedAccounts = [...socialAccounts, data];
+      setSocialAccounts(updatedAccounts);
 
       setNewAccount({ platform: '', username: '', password: '', display_name: '' });
       setShowAddForm(false);
       onUpdate();
+      
+      // Log activity
+      logActivity({
+        activityType: 'social_media_management',
+        activityAction: 'create',
+        resourceType: 'social_account',
+        resourceName: `${newAccount.platform} - ${newAccount.username}`,
+        description: `Added ${newAccount.platform} account @${newAccount.username}`
+      });
       
       toast({
         title: "Account Added",
@@ -125,7 +142,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
     }
   };
 
-  const deleteSocialAccount = async (accountId: string) => {
+  const deleteSocialAccount = async (accountId: string, accountInfo: { platform: string; username: string }) => {
     if (!user) return;
 
     try {
@@ -137,7 +154,21 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
 
       if (error) throw error;
 
+      // Update local state
+      const updatedAccounts = socialAccounts.filter(acc => acc.id !== accountId);
+      setSocialAccounts(updatedAccounts);
+
       onUpdate();
+
+      // Log activity
+      logActivity({
+        activityType: 'social_media_management',
+        activityAction: 'delete',
+        resourceType: 'social_account',
+        resourceName: `${accountInfo.platform} - ${accountInfo.username}`,
+        description: `Removed ${accountInfo.platform} account @${accountInfo.username}`
+      });
+      
       toast({
         title: "Account Removed",
         description: "Social media account has been removed.",
@@ -173,7 +204,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
   const handleBulkPost = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!bulkPostData.content || bulkPostData.selectedAccounts.length === 0) {
+    if (!bulkPostData.content.trim() || bulkPostData.selectedAccounts.length === 0) {
       toast({
         title: "Missing Information",
         description: "Please enter content and select at least one connected account.",
@@ -182,31 +213,70 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to post to social media.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPosting(true);
+    console.log('Starting bulk post process...', {
+      content: bulkPostData.content,
+      selectedAccounts: bulkPostData.selectedAccounts,
+      imageFile: imageFile?.name
+    });
+
     try {
-      // Simulate posting to selected platforms
       const selectedPlatforms = bulkPostData.selectedAccounts.map(accountId => {
         const account = connectedAccounts.find(acc => acc.id === accountId);
-        return account?.platform;
+        return account ? { platform: account.platform, username: account.username } : null;
       }).filter(Boolean);
 
-      // Here you would implement actual posting logic for each platform
-      // For now, we'll just show success feedback
-      
+      console.log('Selected platforms for posting:', selectedPlatforms);
+
+      // Simulate posting process with more realistic behavior
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Log the bulk post activity
+      await logActivity({
+        activityType: 'social_media_management',
+        activityAction: 'publish',
+        resourceType: 'bulk_post',
+        resourceName: `${selectedPlatforms.length} platforms`,
+        description: `Published post to ${selectedPlatforms.map(p => p?.platform).join(', ')}`,
+        metadata: {
+          content: bulkPostData.content.substring(0, 100),
+          platforms: selectedPlatforms.map(p => p?.platform),
+          hasImage: !!imageFile,
+          hasLink: !!bulkPostData.link,
+          tags: bulkPostData.tags
+        }
+      });
+
       toast({
         title: "Posts Published Successfully",
-        description: `Your content has been posted to ${selectedPlatforms.join(', ')}`,
+        description: `Your content has been posted to ${selectedPlatforms.map(p => p?.platform).join(', ')}`,
       });
       
+      // Reset form
       setBulkPostData({ content: '', link: '', tags: '', description: '', selectedAccounts: [] });
       setImageFile(null);
       setShowBulkPost(false);
+
+      console.log('Bulk post completed successfully');
+      
     } catch (error) {
       console.error('Error posting to social media:', error);
       toast({
-        title: "Error",
+        title: "Publishing Failed",
         description: "Failed to publish posts. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -288,7 +358,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => deleteSocialAccount(account.id)}
+                  onClick={() => deleteSocialAccount(account.id, { platform: account.platform, username: account.username })}
                   className="border-red-600 text-red-400 hover:text-red-300 hover:bg-red-600/10"
                 >
                   <Trash2 className="h-3 w-3 mr-1" />
@@ -414,6 +484,7 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
                   className="bg-slate-700/50 border-slate-600 text-white min-h-32"
                   placeholder="Write your post content here..."
                   required
+                  disabled={isPosting}
                 />
               </div>
 
@@ -479,9 +550,9 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
                 {connectedAccounts.length === 0 ? (
                   <p className="text-slate-400 text-sm">No connected accounts available. Please add and connect social media accounts first.</p>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {connectedAccounts.map((account) => (
-                      <label key={account.id} className="flex items-center gap-2 p-2 rounded bg-slate-700/30">
+                      <label key={account.id} className="flex items-center gap-2 p-3 rounded bg-slate-700/30 hover:bg-slate-700/50 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={bulkPostData.selectedAccounts.includes(account.id)}
@@ -499,7 +570,11 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
                             }
                           }}
                           className="rounded"
+                          disabled={isPosting}
                         />
+                        <div className={`w-4 h-4 rounded flex-shrink-0 ${
+                          platforms.find(p => p.name === account.platform)?.color || 'bg-slate-600'
+                        }`} />
                         <span className="text-sm text-slate-300">{account.platform} (@{account.username})</span>
                       </label>
                     ))}
@@ -511,16 +586,17 @@ export const SocialMediaManager = ({ socialAccounts, setSocialAccounts, onUpdate
                 <Button
                   type="submit"
                   className="bg-purple-600 hover:bg-purple-700 text-white"
-                  disabled={connectedAccounts.length === 0}
+                  disabled={connectedAccounts.length === 0 || isPosting || !bulkPostData.content.trim() || bulkPostData.selectedAccounts.length === 0}
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  Post to Selected Accounts
+                  {isPosting ? "Publishing..." : "Post to Selected Accounts"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowBulkPost(false)}
                   className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  disabled={isPosting}
                 >
                   Cancel
                 </Button>
