@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,8 +32,8 @@ interface Website {
   user_id: string;
   name: string;
   url: string;
-  status: string | null;
-  pages: number | null;
+  status: 'active' | 'inactive';
+  pages: number;
   created_at: string;
   updated_at: string;
   lastUpdated?: string;
@@ -97,9 +96,11 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
       
       console.log('Loaded websites:', data);
       
-      // Transform the data to include lastUpdated
+      // Transform the data to match our Website interface
       const transformedData: Website[] = (data || []).map(website => ({
         ...website,
+        status: (website.status === 'active' ? 'active' : 'inactive') as 'active' | 'inactive',
+        pages: website.pages || 0,
         lastUpdated: website.updated_at
       }));
       
