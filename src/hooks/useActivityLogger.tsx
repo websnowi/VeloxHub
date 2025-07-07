@@ -55,9 +55,22 @@ export const useActivityLogger = () => {
     description,
     metadata = {}
   }: LogActivityParams) => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, skipping activity log');
+      return;
+    }
 
     try {
+      console.log('Logging activity:', {
+        activityType,
+        activityAction,
+        resourceType,
+        resourceId,
+        resourceName,
+        description,
+        metadata
+      });
+
       const { error } = await supabase.rpc('log_user_activity', {
         p_activity_type: activityType,
         p_activity_action: activityAction,
@@ -70,7 +83,10 @@ export const useActivityLogger = () => {
 
       if (error) {
         console.error('Error logging activity:', error);
+        throw error;
       }
+
+      console.log('Activity logged successfully');
     } catch (error) {
       console.error('Error logging activity:', error);
     }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
         description: 'Viewed marketing dashboard'
       });
     }
-  }, [user]);
+  }, [user, logActivity]);
 
   const loadWebsites = async () => {
     if (!user) return;

@@ -81,6 +81,8 @@ export const ActivityViewer = () => {
 
     try {
       setLoading(true);
+      console.log('Loading activities for user:', user.id);
+      
       const { data, error } = await supabase
         .from('user_activities')
         .select('*')
@@ -88,7 +90,12 @@ export const ActivityViewer = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading activities:', error);
+        throw error;
+      }
+      
+      console.log('Loaded activities:', data);
       setActivities(data || []);
     } catch (error) {
       console.error('Error loading activities:', error);
@@ -157,7 +164,7 @@ export const ActivityViewer = () => {
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            User Activities
+            User Activities ({activities.length} total)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -207,8 +214,15 @@ export const ActivityViewer = () => {
           {filteredActivities.length === 0 ? (
             <div className="text-center py-12">
               <Activity className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">No Activities Found</h3>
-              <p className="text-slate-400">No activities match your current filters.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {activities.length === 0 ? 'No Activities Yet' : 'No Activities Found'}
+              </h3>
+              <p className="text-slate-400">
+                {activities.length === 0 
+                  ? 'Start using the dashboard to see your activity history here.'
+                  : 'No activities match your current filters.'
+                }
+              </p>
             </div>
           ) : (
             <Table>
