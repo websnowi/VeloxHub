@@ -28,12 +28,31 @@ import { Database } from "@/integrations/supabase/types";
 type DatabaseWebsite = Database['public']['Tables']['websites']['Row'];
 type DatabaseSocialAccount = Database['public']['Tables']['social_accounts']['Row'];
 
-// Create proper interfaces that match what components expect
-interface Website extends DatabaseWebsite {
+interface Website {
+  id: string;
+  user_id: string;
+  name: string;
+  url: string;
+  status: string | null;
+  pages: number | null;
+  created_at: string;
+  updated_at: string;
   lastUpdated?: string;
 }
 
-interface SocialAccount extends DatabaseSocialAccount {}
+interface SocialAccount {
+  id: string;
+  user_id: string;
+  platform: string;
+  username: string;
+  password: string;
+  display_name: string | null;
+  followers: number | null;
+  connected: boolean | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface MarketingDashboardProps {
   activeTab: string;
@@ -64,13 +83,19 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
     if (!user) return;
 
     try {
+      console.log('Loading websites for user:', user.id);
       const { data, error } = await supabase
         .from('websites')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading websites:', error);
+        throw error;
+      }
+      
+      console.log('Loaded websites:', data);
       
       // Transform the data to include lastUpdated
       const transformedData: Website[] = (data || []).map(website => ({
@@ -81,6 +106,11 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
       setWebsites(transformedData);
     } catch (error) {
       console.error('Error loading websites:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load websites. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -88,16 +118,27 @@ export const MarketingDashboard = ({ activeTab, onTabChange }: MarketingDashboar
     if (!user) return;
 
     try {
+      console.log('Loading social accounts for user:', user.id);
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading social accounts:', error);
+        throw error;
+      }
+      
+      console.log('Loaded social accounts:', data);
       setSocialAccounts(data || []);
     } catch (error) {
       console.error('Error loading social accounts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load social accounts. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
