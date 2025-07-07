@@ -7,22 +7,28 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Plus, Search, Settings, ExternalLink, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Website {
   id: string;
+  user_id: string;
   name: string;
   url: string;
   status: 'active' | 'inactive';
   pages: number;
-  lastUpdated: string;
+  created_at: string;
+  updated_at: string;
+  lastUpdated?: string;
 }
 
 interface WebsiteManagerProps {
   websites: Website[];
-  setWebsites: (websites: Website[]) => void;
+  onUpdate: () => void;
 }
 
-export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) => {
+export const WebsiteManager = ({ websites, onUpdate }: WebsiteManagerProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
@@ -30,9 +36,12 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
     url: '',
     description: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { logActivity } = useActivityLogger();
 
-  const handleAddWebsite = (e: React.FormEvent) => {
+  const handleAddWebsite = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.url) {
@@ -44,22 +53,67 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
       return;
     }
 
-    const newWebsite: Website = {
-      id: Date.now().toString(),
-      name: formData.name,
-      url: formData.url,
-      status: 'active',
-      pages: 1,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add websites.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setWebsites([...websites, newWebsite]);
-    setFormData({ name: '', url: '', description: '' });
-    setShowAddForm(false);
-    toast({
-      title: "Website Added",
-      description: "Website has been successfully added to your marketing dashboard.",
-    });
+    setIsLoading(true);
+
+    try {
+      console.log('Adding website:', formData);
+      
+      const { data, error } = await supabase
+        .from('websites')
+        .insert([
+          {
+            user_id: user.id,
+            name: formData.name,
+            url: formData.url,
+            status: 'active',
+            pages: 1
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error adding website:', error);
+        throw error;
+      }
+
+      console.log('Website added successfully:', data);
+
+      // Log the activity
+      await logActivity({
+        activityType: 'website_management',
+        activityAction: 'create',
+        resourceType: 'website',
+        resourceName: formData.name,
+        description: `Added new website: ${formData.name}`
+      });
+
+      setFormData({ name: '', url: '', description: '' });
+      setShowAddForm(false);
+      onUpdate(); // Refresh the websites list
+      
+      toast({
+        title: "Website Added",
+        description: "Website has been successfully added to your marketing dashboard.",
+      });
+    } catch (error) {
+      console.error('Error adding website:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add website. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredWebsites = websites.filter(site =>
@@ -138,7 +192,7 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
                       </div>
                       <div className="flex justify-between text-slate-300">
                         <span>Last Updated:</span>
-                        <span className="font-medium">{website.lastUpdated}</span>
+                        <span className="font-medium">{website.lastUpdated || website.updated_at}</span>
                       </div>
                     </div>
                     
@@ -195,6 +249,7 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     className="bg-slate-700/50 border-slate-600 text-white"
                     placeholder="My Awesome Website"
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -205,6 +260,7 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
                     onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
                     className="bg-slate-700/50 border-slate-600 text-white"
                     placeholder="https://example.com"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -213,14 +269,16 @@ export const WebsiteManager = ({ websites, setWebsites }: WebsiteManagerProps) =
                 <Button
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isLoading}
                 >
-                  Add Website
+                  {isLoading ? "Adding..." : "Add Website"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowAddForm(false)}
                   className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  disabled={isLoading}
                 >
                   Cancel
                 </Button>

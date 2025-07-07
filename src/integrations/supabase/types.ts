@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          clock_in: string | null
+          clock_out: string | null
+          created_at: string
+          date: string
+          employee_id: string
+          id: string
+          notes: string | null
+          overtime_hours: number | null
+          status: string | null
+          total_hours: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          date: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+          overtime_hours?: number | null
+          status?: string | null
+          total_hours?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          date?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          overtime_hours?: number | null
+          status?: string | null
+          total_hours?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_bots: {
         Row: {
           created_at: string
@@ -153,6 +212,39 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_reports: {
+        Row: {
+          created_by: string
+          data: Json | null
+          filters: Json | null
+          generated_at: string
+          id: string
+          report_name: string
+          report_type: string
+          user_id: string
+        }
+        Insert: {
+          created_by: string
+          data?: Json | null
+          filters?: Json | null
+          generated_at?: string
+          id?: string
+          report_name: string
+          report_type: string
+          user_id: string
+        }
+        Update: {
+          created_by?: string
+          data?: Json | null
+          filters?: Json | null
+          generated_at?: string
+          id?: string
+          report_name?: string
+          report_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           api_key: string | null
@@ -224,6 +316,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payroll: {
+        Row: {
+          created_at: string
+          deductions: number | null
+          employee_id: string
+          gross_pay: number
+          id: string
+          net_pay: number
+          paid_date: string | null
+          pay_period_end: string
+          pay_period_start: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deductions?: number | null
+          employee_id: string
+          gross_pay?: number
+          id?: string
+          net_pay?: number
+          paid_date?: string | null
+          pay_period_end: string
+          pay_period_start: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deductions?: number | null
+          employee_id?: string
+          gross_pay?: number
+          id?: string
+          net_pay?: number
+          paid_date?: string | null
+          pay_period_end?: string
+          pay_period_start?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
