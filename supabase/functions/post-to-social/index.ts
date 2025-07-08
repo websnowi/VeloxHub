@@ -8,11 +8,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Twitter API credentials from environment variables
+// API credentials from environment variables
 const TWITTER_API_KEY = Deno.env.get('TWITTER_API_KEY')
 const TWITTER_API_SECRET = Deno.env.get('TWITTER_API_SECRET')
 const TWITTER_ACCESS_TOKEN = Deno.env.get('TWITTER_ACCESS_TOKEN')
 const TWITTER_ACCESS_TOKEN_SECRET = Deno.env.get('TWITTER_ACCESS_TOKEN_SECRET')
+
+const PINTEREST_ACCESS_TOKEN = Deno.env.get('PINTEREST_ACCESS_TOKEN')
+const LINKEDIN_ACCESS_TOKEN = Deno.env.get('LINKEDIN_ACCESS_TOKEN')
+const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY')
+const YOUTUBE_ACCESS_TOKEN = Deno.env.get('YOUTUBE_ACCESS_TOKEN')
 
 function generateOAuthSignature(
   method: string,
@@ -93,6 +98,113 @@ async function postToTwitter(content: string): Promise<any> {
   return JSON.parse(responseText)
 }
 
+async function postToPinterest(content: string): Promise<any> {
+  if (!PINTEREST_ACCESS_TOKEN) {
+    throw new Error('Pinterest access token not configured')
+  }
+
+  const response = await fetch('https://api.pinterest.com/v5/pins', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${PINTEREST_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      board_id: 'your-board-id', // This would need to be configured
+      media_source: {
+        source_type: 'image_url',
+        url: 'https://via.placeholder.com/400x600' // Default image, would need to be configurable
+      },
+      description: content
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Pinterest API error: ${response.status} - ${error}`)
+  }
+
+  return await response.json()
+}
+
+async function postToLinkedIn(content: string): Promise<any> {
+  if (!LINKEDIN_ACCESS_TOKEN) {
+    throw new Error('LinkedIn access token not configured')
+  }
+
+  // First get user profile to get the person URN
+  const profileResponse = await fetch('https://api.linkedin.com/v2/people/(id~)', {
+    headers: {
+      'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    }
+  })
+
+  if (!profileResponse.ok) {
+    throw new Error('Failed to get LinkedIn profile')
+  }
+
+  const profile = await profileResponse.json()
+  const personUrn = profile.id
+
+  const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      author: `urn:li:person:${personUrn}`,
+      lifecycleState: 'PUBLISHED',
+      specificContent: {
+        'com.linkedin.ugc.ShareContent': {
+          shareCommentary: {
+            text: content
+          },
+          shareMediaCategory: 'NONE'
+        }
+      },
+      visibility: {
+        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+      }
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`LinkedIn API error: ${response.status} - ${error}`)
+  }
+
+  return await response.json()
+}
+
+async function postToYouTube(content: string): Promise<any> {
+  if (!YOUTUBE_ACCESS_TOKEN) {
+    throw new Error('YouTube access token not configured')
+  }
+
+  // YouTube requires video upload, so we'll create a community post instead
+  const response = await fetch('https://www.googleapis.com/youtube/v3/activities', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${YOUTUBE_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      snippet: {
+        description: content
+      }
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`YouTube API error: ${response.status} - ${error}`)
+  }
+
+  return await response.json()
+}
+
 async function postToFacebook(content: string, accessToken: string): Promise<any> {
   // Facebook requires a Page Access Token for posting
   const response = await fetch(`https://graph.facebook.com/me/feed`, {
@@ -143,16 +255,39 @@ serve(async (req) => {
             results.push({ platform: 'Twitter', success: true, data: result })
             break
             
+          case 'pinterest':
+            result = await postToPinterest(content)
+            results.push({ platform: 'Pinterest', success: true, data: result })
+            break
+            
+          case 'linkedin':
+            result = await postToLinkedIn(content)
+            results.push({ platform: 'LinkedIn', success: true, data: result })
+            break
+            
+          case 'youtube':
+            result = await postToYouTube(content)
+            results.push({ platform: 'YouTube', success: true, data: result })
+            break
+            
           case 'facebook':
             // For Facebook, we'd need the user's page access token
-            // This is a placeholder - in production, you'd store user tokens
             throw new Error('Facebook posting requires user-specific page access tokens')
+            
+          case 'instagram':
+            throw new Error('Instagram Business API requires Facebook approval and is very restrictive')
+            
+          case 'tiktok':
+            throw new Error('TikTok does not provide a public posting API')
+            
+          case 'snapchat':
+            throw new Error('Snapchat does not provide a public posting API')
             
           default:
             results.push({ 
               platform, 
               success: false, 
-              error: `Platform ${platform} not supported yet` 
+              error: `Platform ${platform} not supported or not configured` 
             })
         }
       } catch (error) {

@@ -13,7 +13,9 @@ import {
   Twitter,
   Facebook,
   Instagram,
-  Linkedin
+  Linkedin,
+  Youtube,
+  MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,10 +29,12 @@ interface PostResult {
 }
 
 const SUPPORTED_PLATFORMS = [
-  { name: 'Twitter', icon: Twitter, color: 'bg-blue-500', supported: true },
-  { name: 'Facebook', icon: Facebook, color: 'bg-blue-600', supported: false },
-  { name: 'Instagram', icon: Instagram, color: 'bg-pink-500', supported: false },
-  { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700', supported: false },
+  { name: 'Twitter', icon: Twitter, color: 'bg-blue-500', supported: true, note: 'Fully supported' },
+  { name: 'Pinterest', icon: MapPin, color: 'bg-red-500', supported: true, note: 'Requires setup' },
+  { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700', supported: true, note: 'Requires setup' },
+  { name: 'YouTube', icon: Youtube, color: 'bg-red-600', supported: true, note: 'Community posts' },
+  { name: 'Facebook', icon: Facebook, color: 'bg-blue-600', supported: false, note: 'Requires page tokens' },
+  { name: 'Instagram', icon: Instagram, color: 'bg-pink-500', supported: false, note: 'Business API only' },
 ];
 
 export const OfficialSocialMediaPoster = () => {
@@ -122,10 +126,10 @@ export const OfficialSocialMediaPoster = () => {
     <div className="space-y-6">
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white">Official API Social Media Posting</CardTitle>
+          <CardTitle className="text-white">Multi-Platform Social Media Posting</CardTitle>
           <p className="text-slate-400 text-sm">
-            Post to social media platforms using their official APIs. 
-            This requires proper API credentials and app approval.
+            Post to multiple social media platforms using their official APIs. 
+            API credentials and app approval required for each platform.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -139,18 +143,18 @@ export const OfficialSocialMediaPoster = () => {
               disabled={isPosting}
             />
             <p className="text-slate-400 text-xs">
-              {content.length}/280 characters (Twitter limit)
+              {content.length}/280 characters (Twitter limit shown)
             </p>
           </div>
 
           <div className="space-y-2">
             <label className="text-slate-300 text-sm font-medium">Select Platforms</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {SUPPORTED_PLATFORMS.map((platform) => (
                 <label
                   key={platform.name}
                   className={`
-                    flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors
+                    flex flex-col gap-2 p-4 rounded-lg border cursor-pointer transition-colors
                     ${platform.supported 
                       ? 'border-slate-600 hover:border-slate-500' 
                       : 'border-slate-700 opacity-50 cursor-not-allowed'
@@ -168,15 +172,24 @@ export const OfficialSocialMediaPoster = () => {
                     disabled={!platform.supported || isPosting}
                     className="sr-only"
                   />
-                  <div className={`p-1 rounded ${platform.color}`}>
-                    <platform.icon className="h-4 w-4 text-white" />
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1 rounded ${platform.color}`}>
+                      <platform.icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-slate-300 text-sm font-medium">{platform.name}</span>
                   </div>
-                  <span className="text-slate-300 text-sm">{platform.name}</span>
-                  {!platform.supported && (
-                    <Badge variant="outline" className="text-xs">
-                      Soon
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {platform.supported ? (
+                      <Badge variant="outline" className="text-xs text-green-400 border-green-400">
+                        Available
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-orange-400 border-orange-400">
+                        Limited
+                      </Badge>
+                    )}
+                    <span className="text-xs text-slate-400">{platform.note}</span>
+                  </div>
                 </label>
               ))}
             </div>
@@ -185,8 +198,15 @@ export const OfficialSocialMediaPoster = () => {
           <Alert className="bg-slate-700/50 border-slate-600">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-slate-300">
-              <strong>Setup Required:</strong> This feature requires Twitter API credentials to be configured in your Supabase project settings. 
-              You need: API Key, API Secret, Access Token, and Access Token Secret.
+              <strong>Setup Required:</strong> Each platform requires specific API credentials:
+              <ul className="mt-2 ml-4 list-disc text-sm space-y-1">
+                <li><strong>Twitter:</strong> API Key, API Secret, Access Token, Access Token Secret (✅ Configured)</li>
+                <li><strong>Pinterest:</strong> Access Token from Pinterest Developer Console</li>
+                <li><strong>LinkedIn:</strong> Access Token with w_member_social scope</li>
+                <li><strong>YouTube:</strong> Access Token with YouTube Data API access</li>
+                <li><strong>Facebook:</strong> Page Access Tokens (complex setup)</li>
+                <li><strong>Instagram:</strong> Business API approval required</li>
+              </ul>
             </AlertDescription>
           </Alert>
 
@@ -196,7 +216,7 @@ export const OfficialSocialMediaPoster = () => {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Send className="h-4 w-4 mr-2" />
-            {isPosting ? "Posting..." : "Post to Selected Platforms"}
+            {isPosting ? "Posting to Platforms..." : `Post to ${selectedPlatforms.length} Selected Platform${selectedPlatforms.length !== 1 ? 's' : ''}`}
           </Button>
         </CardContent>
       </Card>
@@ -217,16 +237,19 @@ export const OfficialSocialMediaPoster = () => {
                     ) : (
                       <XCircle className="h-5 w-5 text-red-500" />
                     )}
-                    <span className="text-slate-300">{result.platform}</span>
+                    <span className="text-slate-300 font-medium">{result.platform}</span>
                   </div>
                   <div className="text-right">
                     {result.success ? (
-                      <Badge className="bg-green-600">Success</Badge>
+                      <div className="space-y-1">
+                        <Badge className="bg-green-600">Success</Badge>
+                        <p className="text-xs text-green-400">Posted successfully</p>
+                      </div>
                     ) : (
                       <div className="space-y-1">
                         <Badge variant="destructive">Failed</Badge>
                         {result.error && (
-                          <p className="text-xs text-red-400">{result.error}</p>
+                          <p className="text-xs text-red-400 max-w-xs break-words">{result.error}</p>
                         )}
                       </div>
                     )}
