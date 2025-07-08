@@ -14,7 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      automation_bots: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_run: string | null
+          name: string
+          platforms: string[] | null
+          runs_today: number | null
+          script: string | null
+          status: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_run?: string | null
+          name: string
+          platforms?: string[] | null
+          runs_today?: number | null
+          script?: string | null
+          status?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_run?: string | null
+          name?: string
+          platforms?: string[] | null
+          runs_today?: number | null
+          script?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      integrations: {
+        Row: {
+          api_key: string | null
+          config: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          status: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      social_accounts: {
+        Row: {
+          avatar_url: string | null
+          connected: boolean | null
+          created_at: string | null
+          display_name: string | null
+          followers: number | null
+          id: string
+          password: string | null
+          platform: string
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          connected?: boolean | null
+          created_at?: string | null
+          display_name?: string | null
+          followers?: number | null
+          id?: string
+          password?: string | null
+          platform: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          connected?: boolean | null
+          created_at?: string | null
+          display_name?: string | null
+          followers?: number | null
+          id?: string
+          password?: string | null
+          platform?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_activities: {
+        Row: {
+          activity_action: string
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          resource_name: string | null
+          resource_type: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_action: string
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          resource_name?: string | null
+          resource_type?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_action?: string
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          resource_name?: string | null
+          resource_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      websites: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          pages: number | null
+          status: string | null
+          updated_at: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          pages?: number | null
+          status?: string | null
+          updated_at?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          pages?: number | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
