@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createHmac } from "node:crypto"
@@ -14,10 +13,11 @@ const TWITTER_API_SECRET = Deno.env.get('TWITTER_API_SECRET')
 const TWITTER_ACCESS_TOKEN = Deno.env.get('TWITTER_ACCESS_TOKEN')
 const TWITTER_ACCESS_TOKEN_SECRET = Deno.env.get('TWITTER_ACCESS_TOKEN_SECRET')
 
-const PINTEREST_ACCESS_TOKEN = Deno.env.get('PINTEREST_ACCESS_TOKEN')
+const FACEBOOK_ACCESS_TOKEN = Deno.env.get('FACEBOOK_ACCESS_TOKEN')
+const INSTAGRAM_ACCESS_TOKEN = Deno.env.get('INSTAGRAM_ACCESS_TOKEN')
 const LINKEDIN_ACCESS_TOKEN = Deno.env.get('LINKEDIN_ACCESS_TOKEN')
-const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY')
-const YOUTUBE_ACCESS_TOKEN = Deno.env.get('YOUTUBE_ACCESS_TOKEN')
+const PINTEREST_ACCESS_TOKEN = Deno.env.get('PINTEREST_ACCESS_TOKEN')
+const PINTEREST_BOARD_ID = Deno.env.get('PINTEREST_BOARD_ID')
 
 function generateOAuthSignature(
   method: string,
@@ -74,11 +74,25 @@ function generateOAuthHeader(method: string, url: string): string {
     .join(", ")
 }
 
-async function postToTwitter(content: string): Promise<any> {
+async function postToTwitter(content: string, mediaUrl?: string, link?: string): Promise<any> {
   const url = "https://api.twitter.com/2/tweets"
   const method = "POST"
   
+  let tweetText = content
+  if (link) {
+    tweetText += ` ${link}`
+  }
+  
   const oauthHeader = generateOAuthHeader(method, url)
+  
+  const tweetData: any = { text: tweetText }
+  
+  // If media is provided, we'd need to upload it first (simplified for now)
+  if (mediaUrl) {
+    console.log(`Media URL provided: ${mediaUrl}`)
+    // Twitter requires media to be uploaded separately via media/upload endpoint
+    // This is a simplified version - in production you'd upload the media first
+  }
   
   const response = await fetch(url, {
     method: method,
@@ -86,7 +100,7 @@ async function postToTwitter(content: string): Promise<any> {
       Authorization: oauthHeader,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text: content }),
+    body: JSON.stringify(tweetData),
   })
 
   const responseText = await response.text()
@@ -98,41 +112,95 @@ async function postToTwitter(content: string): Promise<any> {
   return JSON.parse(responseText)
 }
 
-async function postToPinterest(content: string): Promise<any> {
-  if (!PINTEREST_ACCESS_TOKEN) {
-    throw new Error('Pinterest access token not configured')
+async function postToFacebook(content: string, mediaUrl?: string, link?: string): Promise<any> {
+  if (!FACEBOOK_ACCESS_TOKEN) {
+    throw new Error('Facebook access token not configured')
   }
 
-  const response = await fetch('https://api.pinterest.com/v5/pins', {
+  const postData: any = {
+    message: content,
+    access_token: FACEBOOK_ACCESS_TOKEN
+  }
+
+  if (link) {
+    postData.link = link
+  }
+
+  if (mediaUrl) {
+    postData.picture = mediaUrl
+  }
+
+  const response = await fetch(`https://graph.facebook.com/me/feed`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${PINTEREST_ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      board_id: 'your-board-id', // This would need to be configured
-      media_source: {
-        source_type: 'image_url',
-        url: 'https://via.placeholder.com/400x600' // Default image, would need to be configurable
-      },
-      description: content
-    })
+    body: JSON.stringify(postData)
   })
 
   if (!response.ok) {
     const error = await response.text()
-    throw new Error(`Pinterest API error: ${response.status} - ${error}`)
+    throw new Error(`Facebook API error: ${response.status} - ${error}`)
   }
 
   return await response.json()
 }
 
-async function postToLinkedIn(content: string): Promise<any> {
+async function postToInstagram(content: string, mediaUrl?: string): Promise<any> {
+  if (!INSTAGRAM_ACCESS_TOKEN) {
+    throw new Error('Instagram access token not configured')
+  }
+
+  if (!mediaUrl) {
+    throw new Error('Instagram requires an image or video')
+  }
+
+  // Instagram posting is a two-step process: create media object, then publish
+  const createMediaResponse = await fetch(`https://graph.facebook.com/me/media`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image_url: mediaUrl,
+      caption: content,
+      access_token: INSTAGRAM_ACCESS_TOKEN
+    })
+  })
+
+  if (!createMediaResponse.ok) {
+    const error = await createMediaResponse.text()
+    throw new Error(`Instagram create media error: ${createMediaResponse.status} - ${error}`)
+  }
+
+  const mediaData = await createMediaResponse.json()
+
+  // Publish the media
+  const publishResponse = await fetch(`https://graph.facebook.com/me/media_publish`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      creation_id: mediaData.id,
+      access_token: INSTAGRAM_ACCESS_TOKEN
+    })
+  })
+
+  if (!publishResponse.ok) {
+    const error = await publishResponse.text()
+    throw new Error(`Instagram publish error: ${publishResponse.status} - ${error}`)
+  }
+
+  return await publishResponse.json()
+}
+
+async function postToLinkedIn(content: string, mediaUrl?: string, link?: string): Promise<any> {
   if (!LINKEDIN_ACCESS_TOKEN) {
     throw new Error('LinkedIn access token not configured')
   }
 
-  // First get user profile to get the person URN
+  // Get user profile to get the person URN
   const profileResponse = await fetch('https://api.linkedin.com/v2/people/(id~)', {
     headers: {
       'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
@@ -147,27 +215,44 @@ async function postToLinkedIn(content: string): Promise<any> {
   const profile = await profileResponse.json()
   const personUrn = profile.id
 
+  const postData: any = {
+    author: `urn:li:person:${personUrn}`,
+    lifecycleState: 'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary: {
+          text: content
+        },
+        shareMediaCategory: 'NONE'
+      }
+    },
+    visibility: {
+      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+    }
+  }
+
+  // Add media or link if provided
+  if (mediaUrl || link) {
+    postData.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'ARTICLE'
+    postData.specificContent['com.linkedin.ugc.ShareContent'].media = [{
+      status: 'READY',
+      description: {
+        text: content
+      },
+      originalUrl: link || mediaUrl,
+      title: {
+        text: 'Shared Content'
+      }
+    }]
+  }
+
   const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      author: `urn:li:person:${personUrn}`,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text: content
-          },
-          shareMediaCategory: 'NONE'
-        }
-      },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
-      }
-    })
+    body: JSON.stringify(postData)
   })
 
   if (!response.ok) {
@@ -178,49 +263,35 @@ async function postToLinkedIn(content: string): Promise<any> {
   return await response.json()
 }
 
-async function postToYouTube(content: string): Promise<any> {
-  if (!YOUTUBE_ACCESS_TOKEN) {
-    throw new Error('YouTube access token not configured')
+async function postToPinterest(content: string, mediaUrl?: string, link?: string): Promise<any> {
+  if (!PINTEREST_ACCESS_TOKEN || !PINTEREST_BOARD_ID) {
+    throw new Error('Pinterest access token or board ID not configured')
   }
 
-  // YouTube requires video upload, so we'll create a community post instead
-  const response = await fetch('https://www.googleapis.com/youtube/v3/activities', {
+  if (!mediaUrl) {
+    throw new Error('Pinterest requires an image')
+  }
+
+  const response = await fetch('https://api.pinterest.com/v5/pins', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${YOUTUBE_ACCESS_TOKEN}`,
+      'Authorization': `Bearer ${PINTEREST_ACCESS_TOKEN}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      snippet: {
-        description: content
-      }
+      board_id: PINTEREST_BOARD_ID,
+      media_source: {
+        source_type: 'image_url',
+        url: mediaUrl
+      },
+      description: content,
+      link: link || undefined
     })
   })
 
   if (!response.ok) {
     const error = await response.text()
-    throw new Error(`YouTube API error: ${response.status} - ${error}`)
-  }
-
-  return await response.json()
-}
-
-async function postToFacebook(content: string, accessToken: string): Promise<any> {
-  // Facebook requires a Page Access Token for posting
-  const response = await fetch(`https://graph.facebook.com/me/feed`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: content,
-      access_token: accessToken
-    })
-  })
-
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Facebook API error: ${response.status} - ${error}`)
+    throw new Error(`Pinterest API error: ${response.status} - ${error}`)
   }
 
   return await response.json()
@@ -233,13 +304,19 @@ serve(async (req) => {
   }
 
   try {
-    const { content, platforms, user_id } = await req.json()
+    const { content, platforms, user_id, mediaUrl, link, hashtags } = await req.json()
     
     if (!content || !platforms || !user_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: content, platforms, user_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Add hashtags to content if provided
+    let finalContent = content
+    if (hashtags && hashtags.length > 0) {
+      finalContent += ' ' + hashtags.map((tag: string) => tag.startsWith('#') ? tag : `#${tag}`).join(' ')
     }
 
     const results = []
@@ -251,37 +328,29 @@ serve(async (req) => {
         switch (platform.toLowerCase()) {
           case 'twitter':
           case 'x':
-            result = await postToTwitter(content)
+            result = await postToTwitter(finalContent, mediaUrl, link)
             results.push({ platform: 'Twitter', success: true, data: result })
             break
             
-          case 'pinterest':
-            result = await postToPinterest(content)
-            results.push({ platform: 'Pinterest', success: true, data: result })
+          case 'facebook':
+            result = await postToFacebook(finalContent, mediaUrl, link)
+            results.push({ platform: 'Facebook', success: true, data: result })
+            break
+            
+          case 'instagram':
+            result = await postToInstagram(finalContent, mediaUrl)
+            results.push({ platform: 'Instagram', success: true, data: result })
             break
             
           case 'linkedin':
-            result = await postToLinkedIn(content)
+            result = await postToLinkedIn(finalContent, mediaUrl, link)
             results.push({ platform: 'LinkedIn', success: true, data: result })
             break
             
-          case 'youtube':
-            result = await postToYouTube(content)
-            results.push({ platform: 'YouTube', success: true, data: result })
+          case 'pinterest':
+            result = await postToPinterest(finalContent, mediaUrl, link)
+            results.push({ platform: 'Pinterest', success: true, data: result })
             break
-            
-          case 'facebook':
-            // For Facebook, we'd need the user's page access token
-            throw new Error('Facebook posting requires user-specific page access tokens')
-            
-          case 'instagram':
-            throw new Error('Instagram Business API requires Facebook approval and is very restrictive')
-            
-          case 'tiktok':
-            throw new Error('TikTok does not provide a public posting API')
-            
-          case 'snapchat':
-            throw new Error('Snapchat does not provide a public posting API')
             
           default:
             results.push({ 

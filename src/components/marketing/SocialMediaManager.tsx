@@ -23,7 +23,7 @@ import {
   BarChart3,
   Share2
 } from "lucide-react";
-import { OfficialSocialMediaPoster } from "@/components/marketing/OfficialSocialMediaPoster";
+import { EnhancedSocialMediaPoster } from "@/components/marketing/EnhancedSocialMediaPoster";
 
 type SocialAccount = Database['public']['Tables']['social_accounts']['Row'];
 
@@ -208,12 +208,15 @@ export const SocialMediaManager = ({ socialAccounts, onUpdate, setSocialAccounts
 
   return (
     <div className="space-y-6">
+      {/* Enhanced API-based Social Media Posting */}
+      <EnhancedSocialMediaPoster />
+
       {/* Add Account Card */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white">Connect New Account</CardTitle>
+          <CardTitle className="text-white">Connect New Account (Legacy)</CardTitle>
           <p className="text-slate-400 text-sm">
-            Connect your social media accounts to streamline your marketing efforts.
+            Connect social media accounts for bulk posting (username/password method).
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -282,9 +285,6 @@ export const SocialMediaManager = ({ socialAccounts, onUpdate, setSocialAccounts
         </CardContent>
       </Card>
 
-      {/* Official API Posting */}
-      <OfficialSocialMediaPoster />
-
       {/* Connected Accounts */}
       {socialAccounts.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
@@ -335,9 +335,9 @@ export const SocialMediaManager = ({ socialAccounts, onUpdate, setSocialAccounts
       {/* Bulk Post Card */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white">Bulk Post to Accounts</CardTitle>
+          <CardTitle className="text-white">Bulk Post to Legacy Accounts</CardTitle>
           <p className="text-slate-400 text-sm">
-            Post the same content to all connected social media accounts.
+            Post the same content to all connected social media accounts (legacy method).
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
