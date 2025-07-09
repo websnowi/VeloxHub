@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -60,17 +59,29 @@ export const DashboardSidebar = ({
     if (!user) return;
 
     try {
-      // Create mock dashboards since the table doesn't exist yet
+      console.log('Loading dashboards for user:', user.id);
+      const { data, error } = await supabase
+        .from('dashboards')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading dashboards:', error);
+        throw error;
+      }
+      
+      console.log('Loaded dashboards:', data);
+      setDashboards(data || []);
+    } catch (error) {
+      console.error('Error loading dashboards:', error);
+      // Fallback to mock dashboards
       const mockDashboards: Dashboard[] = [
         { id: '1', name: 'Analytics Dashboard', type: 'analytics', starred: true },
         { id: '2', name: 'Sales Dashboard', type: 'sales', starred: false },
         { id: '3', name: 'Marketing Dashboard', type: 'marketing', starred: false },
       ];
       setDashboards(mockDashboards);
-    } catch (error) {
-      console.error('Error loading dashboards:', error);
-      // Fallback to empty array
-      setDashboards([]);
     }
   };
 

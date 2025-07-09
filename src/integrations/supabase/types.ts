@@ -56,6 +56,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboards: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          starred: boolean | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          starred?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          starred?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           api_key: string | null
