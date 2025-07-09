@@ -60,18 +60,17 @@ export const DashboardSidebar = ({
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('dashboards')
-        .select('id, name, type, starred')
-        .eq('user_id', user.id)
-        .order('starred', { ascending: false })
-        .order('name');
-
-      if (data) {
-        setDashboards(data);
-      }
+      // Create mock dashboards since the table doesn't exist yet
+      const mockDashboards: Dashboard[] = [
+        { id: '1', name: 'Analytics Dashboard', type: 'analytics', starred: true },
+        { id: '2', name: 'Sales Dashboard', type: 'sales', starred: false },
+        { id: '3', name: 'Marketing Dashboard', type: 'marketing', starred: false },
+      ];
+      setDashboards(mockDashboards);
     } catch (error) {
       console.error('Error loading dashboards:', error);
+      // Fallback to empty array
+      setDashboards([]);
     }
   };
 

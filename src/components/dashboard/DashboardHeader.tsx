@@ -28,16 +28,21 @@ export const DashboardHeader = ({ onToggleSidebar }: DashboardHeaderProps) => {
   const loadProfile = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    if (data && data.username) {
-      setUsername(data.username);
-    } else {
-      setUsername(user.email?.split('@')[0] || 'User');
+      if (data && data.username) {
+        setUsername(data.username);
+      } else {
+        setUsername(user.email?.split('@')[0] || 'User');
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      setUsername(user?.email?.split('@')[0] || 'User');
     }
   };
 
