@@ -17,7 +17,6 @@ import {
   Instagram,
   Linkedin,
   MapPin,
-  Image,
   Link,
   Hash,
   X
@@ -25,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageSelector } from "./ImageSelector";
 
 interface PostResult {
   platform: string;
@@ -46,7 +46,7 @@ export const EnhancedSocialMediaPoster = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isPosting, setIsPosting] = useState(false);
   const [results, setResults] = useState<PostResult[]>([]);
-  const [mediaUrl, setMediaUrl] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [link, setLink] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState('');
@@ -73,10 +73,10 @@ export const EnhancedSocialMediaPoster = () => {
     }
 
     // Validate Instagram/Pinterest requirements
-    if ((selectedPlatforms.includes('Instagram') || selectedPlatforms.includes('Pinterest')) && !mediaUrl.trim()) {
+    if ((selectedPlatforms.includes('Instagram') || selectedPlatforms.includes('Pinterest')) && !selectedImage) {
       toast({
         title: "Image Required",
-        description: "Instagram and Pinterest require an image URL",
+        description: "Instagram and Pinterest require an image to be selected",
         variant: "destructive",
       });
       return;
@@ -91,7 +91,7 @@ export const EnhancedSocialMediaPoster = () => {
           content,
           platforms: selectedPlatforms,
           user_id: user?.id,
-          mediaUrl: mediaUrl.trim() || undefined,
+          mediaUrl: selectedImage || undefined,
           link: link.trim() || undefined,
           hashtags: hashtags.length > 0 ? hashtags : undefined
         }
@@ -187,20 +187,12 @@ export const EnhancedSocialMediaPoster = () => {
             </p>
           </div>
 
-          {/* Media URL Input */}
-          <div className="space-y-2">
-            <Label className="text-slate-300 text-sm font-medium flex items-center gap-2">
-              <Image className="h-4 w-4" />
-              Image URL (optional)
-            </Label>
-            <Input
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="bg-slate-700/50 border-slate-600 text-white"
-              disabled={isPosting}
-            />
-          </div>
+          {/* Image Selection */}
+          <ImageSelector
+            selectedImage={selectedImage}
+            onImageSelect={setSelectedImage}
+            disabled={isPosting}
+          />
 
           {/* Link Input */}
           <div className="space-y-2">

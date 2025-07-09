@@ -1,40 +1,10 @@
 
+import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
-type ActivityType = 
-  | 'hr_management'
-  | 'website_management'
-  | 'social_media_management'
-  | 'marketing_campaigns'
-  | 'payroll_management'
-  | 'attendance_tracking'
-  | 'reports_generation'
-  | 'analytics_viewing'
-  | 'employee_management'
-  | 'integration_management'  
-  | 'dashboard_management';
-
-type ActivityAction = 
-  | 'create'
-  | 'update'
-  | 'delete'
-  | 'view'
-  | 'export'
-  | 'import'
-  | 'login'
-  | 'logout'
-  | 'connect'
-  | 'disconnect'
-  | 'publish'
-  | 'schedule'
-  | 'approve'
-  | 'reject';
-
-interface LogActivityParams {
-  activityType: ActivityType;
-  activityAction: ActivityAction;
+interface ActivityData {
+  activityType: string;
+  activityAction: string;
   resourceType?: string;
   resourceId?: string;
   resourceName?: string;
@@ -44,51 +14,34 @@ interface LogActivityParams {
 
 export const useActivityLogger = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
 
-  const logActivity = async ({
-    activityType,
-    activityAction,
-    resourceType,
-    resourceId,
-    resourceName,
-    description,
-    metadata = {}
-  }: LogActivityParams) => {
+  const logActivity = async (activityData: ActivityData) => {
     if (!user) {
-      console.log('No user found, skipping activity log');
+      console.warn('Cannot log activity: user not authenticated');
       return;
     }
 
     try {
-      console.log('Logging activity:', {
-        activityType,
-        activityAction,
-        resourceType,
-        resourceId,
-        resourceName,
-        description,
-        metadata
-      });
-
-      const { error } = await supabase.rpc('log_user_activity', {
-        p_activity_type: activityType,
-        p_activity_action: activityAction,
-        p_resource_type: resourceType,
-        p_resource_id: resourceId,
-        p_resource_name: resourceName,
-        p_description: description,
-        p_metadata: metadata
-      });
+      const { error } = await supabase
+        .from('user_activities')
+        .insert({
+          user_id: user.id,
+          activity_type: activityData.activityType,
+          activity_action: activityData.activityAction,
+          resource_type: activityData.resourceType || null,
+          resource_name: activityData.resourceName || null,
+          description: activityData.description || null,
+          metadata: activityData.metadata || null,
+        });
 
       if (error) {
         console.error('Error logging activity:', error);
         throw error;
       }
 
-      console.log('Activity logged successfully');
+      console.log('Activity logged successfully:', activityData);
     } catch (error) {
-      console.error('Error logging activity:', error);
+      console.error('Failed to log activity:', error);
     }
   };
 
