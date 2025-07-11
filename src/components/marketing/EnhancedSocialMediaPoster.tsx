@@ -36,9 +36,9 @@ interface PostResult {
 const SUPPORTED_PLATFORMS = [
   { name: 'Twitter', icon: Twitter, color: 'bg-blue-500', supported: true, note: 'Text, images, links' },
   { name: 'Facebook', icon: Facebook, color: 'bg-blue-600', supported: true, note: 'Text, images, links' },
-  { name: 'Instagram', icon: Instagram, color: 'bg-pink-500', supported: true, note: 'Images required' },
+  { name: 'Instagram', icon: Instagram, color: 'bg-pink-500', supported: true, note: 'Images optional' },
   { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700', supported: true, note: 'Professional content' },
-  { name: 'Pinterest', icon: MapPin, color: 'bg-red-500', supported: true, note: 'Images required' },
+  { name: 'Pinterest', icon: MapPin, color: 'bg-red-500', supported: true, note: 'Images optional' },
 ];
 
 export const EnhancedSocialMediaPoster = () => {
@@ -47,6 +47,7 @@ export const EnhancedSocialMediaPoster = () => {
   const [isPosting, setIsPosting] = useState(false);
   const [results, setResults] = useState<PostResult[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [includeImage, setIncludeImage] = useState(false);
   const [link, setLink] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState('');
@@ -72,32 +73,34 @@ export const EnhancedSocialMediaPoster = () => {
       return;
     }
 
-    // Validate Instagram/Pinterest requirements
-    if ((selectedPlatforms.includes('Instagram') || selectedPlatforms.includes('Pinterest')) && !selectedImage) {
-      toast({
-        title: "Image Required",
-        description: "Instagram and Pinterest require an image to be selected",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsPosting(true);
     setResults([]);
 
     try {
+      console.log('Starting post to social media platforms:', selectedPlatforms);
+      console.log('Content:', content);
+      console.log('Include image:', includeImage);
+      console.log('Selected image:', selectedImage);
+      console.log('Link:', link);
+      console.log('Hashtags:', hashtags);
+
       const { data, error } = await supabase.functions.invoke('post-to-social', {
         body: {
           content,
           platforms: selectedPlatforms,
           user_id: user?.id,
-          mediaUrl: selectedImage || undefined,
+          mediaUrl: (includeImage && selectedImage) ? selectedImage : undefined,
           link: link.trim() || undefined,
           hashtags: hashtags.length > 0 ? hashtags : undefined
         }
       });
 
-      if (error) throw error;
+      console.log('Edge function response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       setResults(data.results || []);
       
@@ -127,7 +130,7 @@ export const EnhancedSocialMediaPoster = () => {
       console.error('Error posting to social media:', error);
       toast({
         title: "Error",
-        description: "Failed to post to social media. Please try again.",
+        description: `Failed to post to social media: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -168,7 +171,7 @@ export const EnhancedSocialMediaPoster = () => {
         <CardHeader>
           <CardTitle className="text-white">Enhanced Social Media Posting</CardTitle>
           <p className="text-slate-400 text-sm">
-            Post to multiple social media platforms with images, links, and hashtags using official APIs.
+            Post to multiple social media platforms with optional images, links, and hashtags using official APIs.
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -187,12 +190,30 @@ export const EnhancedSocialMediaPoster = () => {
             </p>
           </div>
 
-          {/* Image Selection */}
-          <ImageSelector
-            selectedImage={selectedImage}
-            onImageSelect={setSelectedImage}
-            disabled={isPosting}
-          />
+          {/* Optional Image Selection */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="includeImage"
+                checked={includeImage}
+                onChange={(e) => setIncludeImage(e.target.checked)}
+                disabled={isPosting}
+                className="rounded border-slate-600"
+              />
+              <Label htmlFor="includeImage" className="text-slate-300 text-sm font-medium">
+                Include Image (Optional)
+              </Label>
+            </div>
+            
+            {includeImage && (
+              <ImageSelector
+                selectedImage={selectedImage}
+                onImageSelect={setSelectedImage}
+                disabled={isPosting}
+              />
+            )}
+          </div>
 
           {/* Link Input */}
           <div className="space-y-2">
@@ -289,7 +310,8 @@ export const EnhancedSocialMediaPoster = () => {
           <Alert className="bg-slate-700/50 border-slate-600">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-slate-300">
-              <strong>API Setup Required:</strong> Make sure to configure API credentials for each platform in your Supabase Edge Function secrets.
+              <strong>API Setup Required:</strong> Make sure to configure API credentials for each platform in your Supabase Edge Function secrets. 
+              If publishing fails, check the browser console and edge function logs for detailed error messages.
             </AlertDescription>
           </Alert>
 
